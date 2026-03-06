@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 210" role="img" aria-labelledby="title desc">
+  <title id="title">Logo EIL Cote d'Opale</title>
+  <desc id="desc">Logo de l'Ecole d'Ingenieurs du Littoral Cote d'Opale</desc>
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0b93c9"/>
+      <stop offset="100%" stop-color="#1560b3"/>
+    </linearGradient>
+  </defs>
+  <rect width="620" height="210" fill="#ffffff"/>
+  <g fill="url(#g)">
+    <path d="M8 28h110c19 0 34 15 34 34s-15 34-34 34H55v18h59c19 0 34 15 34 34s-15 34-34 34H8V28zm47 42v18h53c5 0 9-4 9-9s-4-9-9-9H55zm0 60v18h49c5 0 9-4 9-9s-4-9-9-9H55z"/>
+    <rect x="146" y="28" width="46" height="154" rx="23"/>
+    <circle cx="169" cy="16" r="16"/>
+    <path d="M226 28h46v112h79v42H226V28z"/>
+    <path d="M378 36h90v12h-76v40h64v12h-64v76h-14V36z" opacity="0"/>
+  </g>
+  <g fill="#1560b3" font-family="Arial, Helvetica, sans-serif">
+    <text x="376" y="70" font-size="42" font-weight="400">Cote</text>
+    <text x="376" y="116" font-size="42" font-weight="400">d'Opale</text>
+    <rect x="8" y="188" width="604" height="6" fill="#1560b3"/>
+    <text x="6" y="203" font-size="24" font-weight="700" letter-spacing="1">ECOLE D'INGENIEURS DU LITTORAL</text>
+  </g>
+</svg>
