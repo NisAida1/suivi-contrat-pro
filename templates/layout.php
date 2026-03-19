@@ -39,7 +39,7 @@
                     </ul>
                     <div class="d-flex align-items-center gap-3 text-white flex-wrap justify-content-xl-end app-userbar">
                         <span class="badge text-bg-light"><?= h(role_label($currentUser['role'])) ?></span>
-                        <a class="btn btn-outline-light btn-sm" href="index.php?page=logout">Deconnexion</a>
+                        <a class="btn btn-outline-light btn-sm" href="index.php?page=logout">Déconnexion</a>
                     </div>
                 </div>
             </div>

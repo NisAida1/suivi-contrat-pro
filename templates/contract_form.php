@@ -2,15 +2,15 @@
 <div class="row justify-content-center">
     <div class="col-lg-9">
         <div class="mb-4">
-            <h2 class="mb-2">Creer un nouveau dossier</h2>
-            <p class="text-muted">Completez les informations de l'etudiant et de l'entreprise.</p>
+            <h2 class="mb-2">Créer un nouveau dossier</h2>
+            <p class="text-muted">Complétez les informations de l'étudiant et de l'entreprise.</p>
         </div>
 
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
                 <form method="post" action="index.php?page=contract_create" class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label">Prenom <span class="text-danger">*</span></label>
+                        <label class="form-label">Prénom <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="first_name" id="first_name" required>
                     </div>
                     <div class="col-md-6">
@@ -18,7 +18,7 @@
                         <input type="text" class="form-control" name="last_name" id="last_name" required>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Numero etudiant <span class="text-danger">*</span></label>
+                        <label class="form-label">Numéro étudiant <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="student_number" required>
                     </div>
                     <div class="col-md-6">
@@ -59,7 +59,7 @@
                     </div>
                     <div class="col-12 d-flex gap-2 justify-content-end mt-3">
                         <a class="btn btn-secondary" href="index.php?page=contracts">Annuler</a>
-                        <button type="submit" class="btn btn-primary">Creer le dossier</button>
+                        <button type="submit" class="btn btn-primary">Créer le dossier</button>
                     </div>
                 </form>
             </div>

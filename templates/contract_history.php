@@ -7,7 +7,7 @@
     </div>
     <div class="card-body">
         <?php if ($contract['history'] === []): ?>
-            <p class="text-muted mb-0">Aucune action enregistree.</p>
+            <p class="text-muted mb-0">Aucune action enregistrée.</p>
         <?php else: ?>
             <ul class="list-group list-group-flush">
                 <?php foreach ($contract['history'] as $entry): ?>

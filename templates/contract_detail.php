@@ -28,8 +28,8 @@
     <div class="col-lg-8">
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white">
-                <h5 class="mb-0">Etapes du dossier</h5>
-                <small class="text-muted">Les etapes marquees d'un <span class="text-danger">*</span> sont obligatoires.</small>
+                <h5 class="mb-0">Étapes du dossier</h5>
+                <small class="text-muted">Les étapes marquées d’un <span class="text-danger">*</span> sont obligatoires.</small>
             </div>
             <div class="card-body">
                 <div class="timeline">
@@ -39,26 +39,26 @@
                             <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap <?= in_array($step['step_name'], $rightSteps) ? 'flex-row-reverse' : '' ?>">
                                 <div>
                                     <h6 class="mb-1">
-                                        <?= h($step['step_name']) ?>
+                                        <?= h(step_label($step['step_name'])) ?>
                                         <?php if (is_mandatory_step($step['step_name'])): ?>
-                                            <span class="text-danger" title="Etape obligatoire">*</span>
+                                            <span class="text-danger" title="Étape obligatoire">*</span>
                                         <?php endif; ?>
                                     </h6>
-                                    <div class="small text-muted mb-2">Etat: <?= h($step['state']) ?><?php if (!empty($step['done_by_name'])): ?> · Par <?= h($step['done_by_name']) ?><?php if (!empty($step['done_at'])): ?> (<?= h(date('d/m/Y H:i', strtotime($step['done_at']))) ?>) <?php endif; ?><?php endif; ?></div>
+                                    <div class="small text-muted mb-2">État : <?= h(step_state_label($step['state'])) ?><?php if (!empty($step['done_by_name'])): ?> · Par <?= h($step['done_by_name']) ?><?php if (!empty($step['done_at'])): ?> (<?= h(date('d/m/Y H:i', strtotime($step['done_at']))) ?>)<?php endif; ?><?php endif; ?></div>
                                     <?php if (!empty($step['note'])): ?>
                                         <?php 
                                             $displayNote = $step['note'];
                                             if (strpos($step['step_name'], 'Decision OPCO') === 0 && strpos($step['note'], ':') !== false) {
                                                 [$choice, $details] = explode(':', $step['note'], 2);
                                                 $choiceLabel = trim($choice) === 'demande-documents'
-                                                    ? 'Demande des docs supplementaire ou modifications'
+                                                    ? 'Demande de documents supplémentaires ou de modifications'
                                                     : ucfirst(str_replace('-', ' ', trim($choice)));
-                                                $displayNote = 'Decision: ' . $choiceLabel . (trim($details) ? ' - ' . trim($details) : '');
+                                                $displayNote = 'Décision : ' . $choiceLabel . (trim($details) ? ' - ' . trim($details) : '');
                                             } elseif (strpos($step['step_name'], 'Decision OPCO') === 0) {
                                                 $choiceLabel = $step['note'] === 'demande-documents'
-                                                    ? 'Demande des docs supplementaire ou modifications'
+                                                    ? 'Demande de documents supplémentaires ou de modifications'
                                                     : ucfirst(str_replace('-', ' ', $step['note']));
-                                                $displayNote = 'Decision: ' . $choiceLabel;
+                                                $displayNote = 'Décision : ' . $choiceLabel;
                                             }
                                         ?>
                                         <div class="small text-muted"><?= h($displayNote) ?></div>
@@ -86,14 +86,14 @@
                                                 ?>
                                                 <div class="col-md-auto">
                                                     <select class="form-select form-select-sm decision-choice-select" data-step-id="<?= h((string) $step['id']) ?>" name="note">
-                                                        <option value="">Choisir une decision</option>
+                                                        <option value="">Choisir une décision</option>
                                                         <option value="valide" <?= $currentChoice === 'valide' ? 'selected' : '' ?>>Valide</option>
                                                         <option value="refuse" <?= $currentChoice === 'refuse' ? 'selected' : '' ?>>Refuse</option>
-                                                        <option value="demande-documents" <?= $currentChoice === 'demande-documents' ? 'selected' : '' ?>>Demande des docs supplementaire ou modifications</option>
+                                                        <option value="demande-documents" <?= $currentChoice === 'demande-documents' ? 'selected' : '' ?>>Demande de documents supplémentaires ou de modifications</option>
                                                     </select>
                                                 </div>
                                                 <div class="col-md doc-note-container" <?= $currentChoice !== 'demande-documents' ? 'style="display:none;"' : '' ?>>
-                                                    <input type="text" class="form-control form-control-sm doc-note-field" name="doc-note" placeholder="Preciser les documents supplementaires ou modifications demandes" value="<?= h($currentDocuments) ?>">
+                                                    <input type="text" class="form-control form-control-sm doc-note-field" name="doc-note" placeholder="Préciser les documents supplémentaires ou modifications demandés" value="<?= h($currentDocuments) ?>">
                                                 </div>
                                                 <input type="hidden" name="state" value="done">
                                                 <div class="col-md-auto">
@@ -103,8 +103,8 @@
                                                 <div class="col-md-auto">
                                                     <select class="form-select form-select-sm" name="state">
                                                         <option value="pending" <?= $step['state'] === 'pending' ? 'selected' : '' ?>>En attente</option>
-                                                        <option value="done" <?= $step['state'] === 'done' ? 'selected' : '' ?>>Completee</option>
-                                                        <option value="rejected" <?= $step['state'] === 'rejected' ? 'selected' : '' ?>>Refusee</option>
+                                                        <option value="done" <?= $step['state'] === 'done' ? 'selected' : '' ?>>Complétée</option>
+                                                        <option value="rejected" <?= $step['state'] === 'rejected' ? 'selected' : '' ?>>Refusée</option>
                                                     </select>
                                                 </div>
                                                 <div class="col-md">
@@ -131,7 +131,7 @@
             </div>
             <div class="card-body">
                 <?php if ($contract['history'] === []): ?>
-                    <p class="text-muted mb-0">Aucune action enregistree.</p>
+                    <p class="text-muted mb-0">Aucune action enregistrée.</p>
                 <?php else: ?>
                     <ul class="list-group list-group-flush">
                         <?php foreach (array_slice($contract['history'], 0, 5) as $entry): ?>
@@ -156,11 +156,11 @@
                 <h5 class="mb-0">Informations dossier</h5>
             </div>
             <div class="card-body">
-                <p><strong>Etudiant:</strong><br><?= h($contract['student_name']) ?><br><small class="text-muted"><?= h($contract['student_email']) ?></small></p>
-                <p><strong>Numero:</strong><br><?= h($contract['student_number'] ?? '') ?></p>
-                <p><strong>Formation:</strong><br><?= h($contract['formation']) ?></p>
-                <p><strong>Entreprise:</strong><br><?= h($contract['company_name']) ?></p>
-                <p class="mb-0"><strong>Statut:</strong><br><?= h(status_label($contract['status'])) ?></p>
+                <p><strong>Étudiant :</strong><br><?= h($contract['student_name']) ?><br><small class="text-muted"><?= h($contract['student_email']) ?></small></p>
+                <p><strong>Numéro :</strong><br><?= h($contract['student_number'] ?? '') ?></p>
+                <p><strong>Formation :</strong><br><?= h($contract['formation']) ?></p>
+                <p><strong>Entreprise :</strong><br><?= h($contract['company_name']) ?></p>
+                <p class="mb-0"><strong>Statut :</strong><br><?= h(status_label($contract['status'])) ?></p>
             </div>
         </div>
 
@@ -171,11 +171,11 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Statut global (mis a jour automatiquement)</label>
+                        <label class="form-label">Statut global (mis à jour automatiquement)</label>
                         <div class="p-3 bg-light rounded border">
                             <strong><?= h(status_label($contract['status'])) ?></strong>
                             <small class="text-muted d-block mt-2">
-                                Le statut se met a jour automatiquement en fonction de l'avancement des etapes.
+                                Le statut se met à jour automatiquement en fonction de l’avancement des étapes.
                             </small>
                         </div>
                     </div>
@@ -186,7 +186,7 @@
 </div>
 
 <script>
-// Gestion de l'affichage du champ de note pour la decision OPCO
+// Gestion de l'affichage du champ de note pour la décision OPCO
 document.querySelectorAll('.decision-choice-select').forEach(select => {
     select.addEventListener('change', function() {
         const container = this.closest('form').querySelector('.doc-note-container');
@@ -202,25 +202,26 @@ document.querySelectorAll('.decision-choice-select').forEach(select => {
     });
 });
 
-// Validation du formulaire pour Decision OPCO
+// Validation du formulaire pour Décision OPCO
 document.querySelectorAll('.step-form').forEach(form => {
     const choiceSelect = form.querySelector('.decision-choice-select');
     if (choiceSelect) {
         form.addEventListener('submit', function(e) {
             const choice = choiceSelect.value;
-            const isDecisionOpco = form.closest('.timeline-item')?.querySelector('h6')?.textContent.includes('Decision OPCO');
+            const stepTitleText = form.closest('.timeline-item')?.querySelector('h6')?.textContent || '';
+            const isDecisionOpco = stepTitleText.includes('Decision OPCO') || stepTitleText.includes('Décision OPCO');
             
             if (choice === 'demande-documents') {
                 const docNoteField = form.querySelector('.doc-note-field');
                 if (!docNoteField.value.trim()) {
                     e.preventDefault();
-                    alert('Veuillez preciser les documents supplementaires ou modifications demandes');
+                    alert('Veuillez préciser les documents supplémentaires ou modifications demandés');
                     docNoteField.focus();
                     return;
                 }
             }
             
-            // Si c'est Decision OPCO avec refuse, faire la mise à jour en AJAX
+            // Si c'est Décision OPCO avec refusée, faire la mise à jour en AJAX
             if (isDecisionOpco && choice === 'refuse') {
                 e.preventDefault();
                 
@@ -240,14 +241,14 @@ document.querySelectorAll('.step-form').forEach(form => {
                     }
                     
                     // Afficher un message de succès
-                    alert('Decision OPCO enregistree. Le dossier est maintenant cloture.');
+                    alert('Décision OPCO enregistrée. Le dossier est maintenant clôturé.');
                     
                     // Recharger la page après 1 seconde
                     setTimeout(() => location.reload(), 1000);
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
-                    alert('Une erreur est survenue lors de la mise a jour.');
+                    alert('Une erreur est survenue lors de la mise à jour.');
                 });
             }
         });

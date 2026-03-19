@@ -51,7 +51,7 @@ function contract_statuses(): array
 function status_label(string $status): string
 {
     $labels = [
-        'BROUILLON' => 'En preparation',
+        'BROUILLON' => 'En préparation',
         'EN_COURS' => 'En cours',
         'EN_ATTENTE_OPCO' => 'En attente OPCO',
         'CORRECTION' => 'En correction',
@@ -76,13 +76,52 @@ function status_class(string $status): string
 function role_label(string $role): string
 {
     $labels = [
-        'etudiant' => 'Etudiant',
-        'secretaire' => 'Secretaire',
+        'etudiant' => 'Étudiant',
+        'secretaire' => 'Secrétaire',
         'responsable' => 'Responsable',
         'directeur' => 'Directeur',
     ];
 
     return $labels[$role] ?? $role;
+}
+
+function step_label(string $stepName): string
+{
+    if (preg_match('/^Decision OPCO\s+(\d+e)$/', $stepName, $matches) === 1) {
+        return 'Décision OPCO ' . $matches[1];
+    }
+
+    $labels = [
+        'Fiche envoyee a l entreprise par l ecole' => 'Fiche envoyée à l’entreprise par l’école',
+        'Fiche completee recue de l entreprise par l ecole' => 'Fiche complétée reçue de l’entreprise par l’école',
+        'Mail d acceptation etudiant recu' => 'Mail d’acceptation de l’étudiant reçu',
+        'Fiche renvoyee pour correction' => 'Fiche renvoyée pour correction',
+        'Fiche corrigee recue' => 'Fiche corrigée reçue',
+        'CERFA et convention envoyes a l entreprise' => 'CERFA et convention envoyés à l’entreprise',
+        'Dates modifiees et nouvelle version envoyee' => 'Dates modifiées et nouvelle version envoyée',
+        'CERFA signe avec l entreprise' => 'CERFA signé avec l’entreprise',
+        'Convention signee avec l entreprise' => 'Convention signée avec l’entreprise',
+        'Demande APT deposee' => 'Demande APT déposée',
+        'APT obtenue' => 'APT obtenue',
+        'APT refusee' => 'APT refusée',
+        'CERFA recu par l ecole' => 'CERFA reçu par l’école',
+        'CERFA envoye a l OPCO par l etudiant' => 'CERFA envoyé à l’OPCO par l’étudiant',
+        'CERFA envoye a l OPCO' => 'CERFA envoyé à l’OPCO',
+        'Decision OPCO' => 'Décision OPCO',
+    ];
+
+    return $labels[$stepName] ?? $stepName;
+}
+
+function step_state_label(string $state): string
+{
+    $labels = [
+        'pending' => 'En attente',
+        'done' => 'Complétée',
+        'rejected' => 'Refusée',
+    ];
+
+    return $labels[$state] ?? $state;
 }
 
 function formation_prefix(string $formation): string

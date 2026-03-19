@@ -7,7 +7,7 @@
                     <p class="text-muted mb-0">Vue d'ensemble des dossiers et du workflow.</p>
                 </div>
                 <div class="text-end">
-                    <div class="text-muted small">Duree moyenne</div>
+                    <div class="text-muted small">Durée moyenne</div>
                     <div class="fs-3 fw-bold text-primary"><?= h((string) $stats['avg_days']) ?> j</div>
                 </div>
             </div>
@@ -37,8 +37,8 @@
             <thead class="table-light">
                 <tr>
                     <th>Ordre</th>
-                    <th>Etape</th>
-                    <th>Completees</th>
+                    <th>Étape</th>
+                    <th>Complétées</th>
                     <th>Total</th>
                 </tr>
             </thead>

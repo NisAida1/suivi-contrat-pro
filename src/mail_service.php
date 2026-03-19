@@ -176,7 +176,7 @@ function send_email_simple(string $to, string $subject, string $body, bool $isHt
  */
 function send_student_welcome_email(string $email, string $fullName, string $password, string $dossierNumber, string $companyName): bool
 {
-    $subject = 'Votre dossier de contrat a ete cree - EILCO';
+    $subject = 'Votre dossier de contrat a été créé - EILCO';
     
     $body = <<<HTML
 <!DOCTYPE html>
@@ -202,11 +202,11 @@ function send_student_welcome_email(string $email, string $fullName, string $pas
         <div class="content">
             <h2>Bonjour {$fullName},</h2>
             
-            <p>Votre dossier de contrat a ete cree avec succes par le secretariat de l'EILCO.</p>
+            <p>Votre dossier de contrat a été créé avec succès par le secrétariat de l'EILCO.</p>
             
             <p><strong>Informations du dossier :</strong></p>
             <ul>
-                <li><strong>Numero de dossier :</strong> {$dossierNumber}</li>
+                <li><strong>Numéro de dossier :</strong> {$dossierNumber}</li>
                 <li><strong>Entreprise :</strong> {$companyName}</li>
             </ul>
             
@@ -215,11 +215,11 @@ function send_student_welcome_email(string $email, string $fullName, string $pas
                 <p><strong>Email :</strong> {$email}</p>
                 <p><strong>Mot de passe provisoire :</strong> <code style="background: #e9ecef; padding: 5px 10px; border-radius: 3px; font-size: 14px;">{$password}</code></p>
                 <p style="color: #dc3545; margin-top: 10px;">
-                    <strong>Important :</strong> Pour des raisons de securite, veuillez changer ce mot de passe lors de votre premiere connexion.
+                    <strong>Important :</strong> Pour des raisons de sécurité, veuillez changer ce mot de passe lors de votre première connexion.
                 </p>
             </div>
             
-            <p>Vous pouvez maintenant vous connecter a la plateforme pour suivre l'avancement de votre dossier.</p>
+            <p>Vous pouvez maintenant vous connecter à la plateforme pour suivre l'avancement de votre dossier.</p>
             
             <div style="text-align: center;">
                 <a href="http://localhost:8000/index.php?page=login" class="btn">Se connecter</a>
@@ -227,8 +227,8 @@ function send_student_welcome_email(string $email, string $fullName, string $pas
         </div>
         
         <div class="footer">
-            <p>Cet email a ete envoye automatiquement par la plateforme Suivi Contrat Pro.</p>
-            <p>EILCO - Ecole d'Ingenieurs du Littoral Cote d'Opale</p>
+            <p>Cet email a été envoyé automatiquement par la plateforme Suivi Contrat Pro.</p>
+            <p>EILCO - École d'Ingénieurs du Littoral Côte d'Opale</p>
         </div>
     </div>
 </body>

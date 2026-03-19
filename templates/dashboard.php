@@ -44,7 +44,7 @@
             <?php endif; ?>
             <?php if (in_array($currentUser['role'], ['secretaire', 'responsable'], true)): ?>
                 <a class="btn btn-primary btn-sm" href="index.php?page=contract_create">
-                    <i class="fas fa-plus me-1"></i>Creer un dossier
+                    <i class="fas fa-plus me-1"></i>Créer un dossier
                 </a>
             <?php endif; ?>
         </div>
@@ -55,7 +55,7 @@
                 <tr>
                     <th>Dossier</th>
                     <th>Entreprise</th>
-                    <th>Etudiant</th>
+                    <th>Étudiant</th>
                     <th>Statut</th>
                     <th></th>
                 </tr>

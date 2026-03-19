@@ -4,12 +4,12 @@
             <div>
                 <h2 class="mb-1">Gestion des contrats</h2>
                 <p class="text-muted mb-0">
-                    Consultez et gerez les dossiers.
+                    Consultez et gérez les dossiers.
                     <?php if ($search !== '' || $statusFilter !== ''): ?>
                         <span class="badge bg-info ms-2">
-                            Filtres actifs: 
-                            <?php if ($search !== ''): ?>Recherche: "<?= h($search) ?>"<?php endif; ?>
-                            <?php if ($statusFilter !== ''): ?>Statut: <?= h(status_label($statusFilter)) ?><?php endif; ?>
+                            Filtres actifs : 
+                            <?php if ($search !== ''): ?>Recherche : "<?= h($search) ?>"<?php endif; ?>
+                            <?php if ($statusFilter !== ''): ?>Statut : <?= h(status_label($statusFilter)) ?><?php endif; ?>
                         </span>
                     <?php endif; ?>
                 </p>
@@ -24,7 +24,7 @@
                     <input type="hidden" name="page" value="contracts">
                     <div class="col-md-5">
                         <label class="form-label">Recherche</label>
-                        <input type="text" class="form-control" name="q" value="<?= h($search ?? '') ?>" placeholder="Nom, entreprise, numero dossier">
+                        <input type="text" class="form-control" name="q" value="<?= h($search ?? '') ?>" placeholder="Nom, entreprise, numéro de dossier">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Statut</label>
@@ -37,7 +37,7 @@
                     </div>
                     <div class="col-md-3 d-flex gap-2">
                         <button type="submit" class="btn btn-primary w-100">Filtrer</button>
-                        <a href="index.php?page=contracts" class="btn btn-secondary w-100">Reinitialiser</a>
+                        <a href="index.php?page=contracts" class="btn btn-secondary w-100">Réinitialiser</a>
                     </div>
                 </form>
             </div>
@@ -49,7 +49,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Dossier</th>
-                            <th>Etudiant</th>
+                            <th>Étudiant</th>
                             <th>Entreprise</th>
                             <th>Statut</th>
                             <th>Progression</th>
@@ -58,7 +58,7 @@
                     </thead>
                     <tbody>
                         <?php if ($contracts === []): ?>
-                            <tr><td colspan="6" class="text-center py-4">Aucun contrat trouve.</td></tr>
+                            <tr><td colspan="6" class="text-center py-4">Aucun contrat trouvé.</td></tr>
                         <?php else: ?>
                             <?php foreach ($contracts as $contract): ?>
                                 <tr>

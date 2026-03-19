@@ -29,7 +29,7 @@ if ($page === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect_to('change_password');
     }
     
-    set_flash('success', 'Connexion reussie.');
+    set_flash('success', 'Connexion réussie.');
     redirect_to('dashboard');
 }
 
@@ -41,7 +41,7 @@ if ($page === 'logout') {
     }
     session_destroy();
     session_start();
-    set_flash('info', 'Deconnexion reussie.');
+    set_flash('info', 'Déconnexion réussie.');
     redirect_to('login');
 }
 
@@ -199,10 +199,10 @@ if ($page === 'contract_create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
         }
 
-        log_action($pdo, $contractId, (int) $user['id'], 'Creation', 'Dossier ' . $dossierNumber . ' cree');
+        log_action($pdo, $contractId, (int) $user['id'], 'Création', 'Dossier ' . $dossierNumber . ' créé');
         $pdo->commit();
 
-        $message = 'Dossier ' . $dossierNumber . ' cree avec succes.';
+        $message = 'Dossier ' . $dossierNumber . ' créé avec succès.';
         if ($generatedPassword !== null) {
             // Envoyer l'email à l'étudiant avec ses identifiants
             $emailSent = send_student_welcome_email(
@@ -214,16 +214,16 @@ if ($page === 'contract_create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             
             if ($emailSent) {
-                $message .= ' Un email a ete envoye a l\'etudiant avec ses identifiants.';
+                $message .= ' Un email a été envoyé à l\'étudiant avec ses identifiants.';
             } else {
-                $message .= ' Mot de passe temporaire etudiant: ' . $generatedPassword . ' (Email non envoye)';
+                $message .= ' Mot de passe temporaire étudiant : ' . $generatedPassword . ' (email non envoyé)';
             }
         }
         set_flash('success', $message);
         redirect_to('contract_detail', ['id' => $contractId]);
     } catch (Throwable $exception) {
         $pdo->rollBack();
-        set_flash('danger', 'Impossible de creer le dossier: ' . $exception->getMessage());
+        set_flash('danger', 'Impossible de créer le dossier : ' . $exception->getMessage());
         redirect_to('contract_create');
     }
 }
@@ -253,7 +253,7 @@ if ($page === 'step_update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         // Pour Decision OPCO (y compris 2e, 3e...), on accepte les choix personnalisés
         $customChoices = get_step_custom_choices($step['step_name']);
         if ($customChoices === null) {
-            set_flash('danger', 'Etat invalide.');
+            set_flash('danger', 'État invalide.');
             redirect_to('contract_detail', ['id' => $contractId]);
         }
     }
@@ -317,8 +317,8 @@ if ($page === 'step_update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     update_contract_status($pdo, $contractId);
-    log_action($pdo, $contractId, (int) $user['id'], 'Mise a jour etape', $step['step_name'] . ': ' . $step['state'] . ' -> ' . $newState);
-    set_flash('success', 'Etape mise a jour.');
+    log_action($pdo, $contractId, (int) $user['id'], 'Mise à jour étape', $step['step_name'] . ': ' . $step['state'] . ' -> ' . $newState);
+    set_flash('success', 'Étape mise à jour.');
     redirect_to('contract_detail', ['id' => $contractId]);
 }
 
@@ -334,8 +334,8 @@ if ($page === 'status_update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $pdo->prepare('UPDATE contracts SET status = :status, updated_at = NOW() WHERE id = :id');
     $stmt->execute(['status' => $status, 'id' => $contractId]);
-    log_action($pdo, $contractId, (int) $user['id'], 'Changement statut', 'Nouveau statut: ' . $status);
-    set_flash('success', 'Statut mis a jour.');
+    log_action($pdo, $contractId, (int) $user['id'], 'Changement statut', 'Nouveau statut : ' . $status);
+    set_flash('success', 'Statut mis à jour.');
     redirect_to('contract_detail', ['id' => $contractId]);
 }
 
@@ -351,8 +351,8 @@ if ($page === 'contract_delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     soft_delete_contract($pdo, $contractId);
-    log_action($pdo, $contractId, (int) $user['id'], 'Suppression', 'Dossier deplace vers la corbeille');
-    set_flash('success', 'Le dossier a ete deplace vers la corbeille.');
+    log_action($pdo, $contractId, (int) $user['id'], 'Suppression', 'Dossier déplacé vers la corbeille');
+    set_flash('success', 'Le dossier a été déplacé vers la corbeille.');
     redirect_to('contracts');
 }
 
@@ -364,11 +364,11 @@ if ($page === 'trash' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($action === 'restore') {
         restore_contract($pdo, $contractId);
-        log_action($pdo, $contractId, (int) $user['id'], 'Restauration', 'Dossier restaure depuis la corbeille');
-        set_flash('success', 'Le dossier a ete restaure avec succes.');
+        log_action($pdo, $contractId, (int) $user['id'], 'Restauration', 'Dossier restauré depuis la corbeille');
+        set_flash('success', 'Le dossier a été restauré avec succès.');
     } elseif ($action === 'delete_permanent') {
         hard_delete_contract($pdo, $contractId);
-        set_flash('success', 'Le dossier a ete supprime definitivement.');
+        set_flash('success', 'Le dossier a été supprimé définitivement.');
     }
     
     redirect_to('trash');
