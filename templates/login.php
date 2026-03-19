@@ -1,6 +1,9 @@
 <div class="row justify-content-center">
     <div class="col-lg-6">
-        <div class="card shadow-sm border-0 mt-4">
+        <div class="text-center mb-4 mt-4">
+            <img src="assets/img/image.png" alt="EILCO" class="app-logo app-logo-login">
+        </div>
+        <div class="card shadow-sm border-0">
             <div class="card-body p-4 p-lg-5">
                 <div class="text-center mb-4">
                     <h2 class="fw-bold mb-2">Connexion</h2>

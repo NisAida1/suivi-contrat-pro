@@ -1,5 +1,58 @@
+:root {
+    --eilco-blue: #003d7a;
+    --eilco-blue-dark: #002d5a;
+    --eilco-blue-light: #0052a3;
+    --eilco-accent: #00a8e8;
+}
+
 body {
     font-family: Arial, sans-serif;
+}
+
+body.has-navbar {
+    padding-top: 140px;
+}
+
+.app-navbar {
+    background: linear-gradient(135deg, var(--eilco-blue-dark) 0%, var(--eilco-blue) 100%) !important;
+    z-index: 1030;
+}
+
+.btn-primary {
+    background-color: var(--eilco-blue) !important;
+    border-color: var(--eilco-blue) !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--eilco-blue-light) !important;
+    border-color: var(--eilco-blue-light) !important;
+}
+
+.btn-outline-primary {
+    color: var(--eilco-blue) !important;
+    border-color: var(--eilco-blue) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--eilco-blue) !important;
+    border-color: var(--eilco-blue) !important;
+    color: white !important;
+}
+
+.text-primary {
+    color: var(--eilco-blue) !important;
+}
+
+.bg-primary {
+    background-color: var(--eilco-blue) !important;
+}
+
+.badge.bg-info {
+    background-color: var(--eilco-accent) !important;
+}
+
+code {
+    color: var(--eilco-blue) !important;
 }
 
 .app-logo {
@@ -10,16 +63,20 @@ body {
 
 .app-logo-nav {
     width: auto;
-    height: 68px;
+    height: 55px;
     max-width: 320px;
 }
 
 .app-logo-login {
     width: auto;
-    max-width: 520px;
-    max-height: 180px;
+    max-width: 450px;
+    max-height: 150px;
     margin-left: auto;
     margin-right: auto;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--eilco-blue-dark) 0%, var(--eilco-blue) 100%);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .app-title {
@@ -74,13 +131,30 @@ body {
     background: #198754;
 }
 
+.timeline-item-right {
+    margin-left: auto;
+    margin-right: 0.5rem;
+    border-left: none;
+    border-right: 3px solid #dee2e6;
+    padding-left: 1rem;
+    padding-right: 1.25rem;
+    text-align: right;
+}
+
+.timeline-item-right::before {
+    left: auto;
+    right: -8px;
+}
+
+.timeline-item-right.done {
+    border-right-color: #198754;
+}
+
 .step-form {
     min-width: 280px;
 }
 
-code {
-    color: #0d6efd;
-}
+
 
 @media (max-width: 768px) {
     .app-logo-nav {

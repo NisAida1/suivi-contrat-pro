@@ -14,18 +14,24 @@
     </div>
 </div>
 
+<?php if (in_array($currentUser['role'], ['secretaire', 'responsable', 'directeur'], true)): ?>
 <div class="row g-3 mb-4">
     <?php foreach ($metrics['by_status'] as $code => $count): ?>
+        <?php 
+            $percentage = $metrics['total'] > 0 ? round(($count / $metrics['total']) * 100, 1) : 0;
+        ?>
         <div class="col-md-4 col-lg-2">
             <div class="card shadow-sm border-0 h-100">
                 <div class="card-body">
                     <span class="badge bg-<?= h(status_class($code)) ?> mb-2"><?= h(status_label($code)) ?></span>
                     <div class="fs-4 fw-bold"><?= h((string) $count) ?></div>
+                    <div class="small text-muted"><?= h((string) $percentage) ?>%</div>
                 </div>
             </div>
         </div>
     <?php endforeach; ?>
 </div>
+<?php endif; ?>
 
 <div class="card shadow-sm border-0">
     <div class="card-header bg-white d-flex justify-content-between align-items-center">

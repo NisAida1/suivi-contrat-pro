@@ -143,10 +143,9 @@ if ($page === 'contract_create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $studentEmail = trim((string) ($_POST['student_email'] ?? ''));
     $companyName = trim((string) ($_POST['company_name'] ?? ''));
     $formation = trim((string) ($_POST['formation'] ?? ''));
-    $opco = trim((string) ($_POST['opco'] ?? ''));
     $isEuEeaSwiss = (int) ($_POST['is_eu_eea_swiss'] ?? 0) === 1;
 
-    if ($firstName === '' || $lastName === '' || $studentNumber === '' || $studentEmail === '' || $companyName === '' || $formation === '' || $opco === '' || !isset($_POST['is_eu_eea_swiss'])) {
+    if ($firstName === '' || $lastName === '' || $studentNumber === '' || $studentEmail === '' || $companyName === '' || $formation === '' || !isset($_POST['is_eu_eea_swiss'])) {
         set_flash('danger', 'Tous les champs sont obligatoires.');
         redirect_to('contract_create');
     }
@@ -178,13 +177,12 @@ if ($page === 'contract_create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $dossierNumber = generate_dossier_number($pdo, $formation);
-        $insertContract = $pdo->prepare('INSERT INTO contracts (dossier_number, student_user_id, company_name, formation, opco, is_eu_eea_swiss, status, current_step, created_at, updated_at) VALUES (:dossier_number, :student_user_id, :company_name, :formation, :opco, :is_eu_eea_swiss, :status, :current_step, NOW(), NOW())');
+        $insertContract = $pdo->prepare('INSERT INTO contracts (dossier_number, student_user_id, company_name, formation, is_eu_eea_swiss, status, current_step, created_at, updated_at) VALUES (:dossier_number, :student_user_id, :company_name, :formation, :is_eu_eea_swiss, :status, :current_step, NOW(), NOW())');
         $insertContract->execute([
             'dossier_number' => $dossierNumber,
             'student_user_id' => $studentId,
             'company_name' => $companyName,
             'formation' => $formation,
-            'opco' => $opco,
             'is_eu_eea_swiss' => $isEuEeaSwiss ? 1 : 0,
             'status' => 'EN_COURS',
             'current_step' => default_steps($isEuEeaSwiss)[0],
@@ -236,6 +234,7 @@ if ($page === 'step_update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $stepId = (int) ($_POST['step_id'] ?? 0);
     $newState = trim((string) ($_POST['state'] ?? ''));
     $note = trim((string) ($_POST['note'] ?? ''));
+    $docNote = trim((string) ($_POST['doc-note'] ?? ''));
 
     $contract = fetch_contract_for_detail($pdo, $contractId);
     $step = fetch_step_by_id($pdo, $contractId, $stepId);
@@ -250,9 +249,30 @@ if ($page === 'step_update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             set_flash('danger', 'Action non autorisee pour votre role.');
             redirect_to('contract_detail', ['id' => $contractId]);
         }
-    } elseif (!in_array($newState, ['pending', 'done', 'rejected'], true)) {
-        set_flash('danger', 'Etat invalide.');
-        redirect_to('contract_detail', ['id' => $contractId]);
+    } elseif (!in_array($newState, ['pending', 'done', 'rejected'], true) && $newState !== '') {
+        // Pour Decision OPCO (y compris 2e, 3e...), on accepte les choix personnalisés
+        $customChoices = get_step_custom_choices($step['step_name']);
+        if ($customChoices === null) {
+            set_flash('danger', 'Etat invalide.');
+            redirect_to('contract_detail', ['id' => $contractId]);
+        }
+    }
+
+    // Gérer les choix personnalisés (Decision OPCO, Decision OPCO 2e, ...)
+    $customChoices = get_step_custom_choices($step['step_name']);
+    if ($customChoices !== null && $note !== '') {
+        // Valider le choix
+        if (!in_array($note, $customChoices, true)) {
+            set_flash('danger', 'Choix invalide.');
+            redirect_to('contract_detail', ['id' => $contractId]);
+        }
+        
+        // Si c'est "demande-documents", ajouter les documents demandés à la note
+        if ($note === 'demande-documents' && $docNote !== '') {
+            $note = 'demande-documents: ' . $docNote;
+        }
+        
+        $newState = 'done';
     }
 
     $stmt = $pdo->prepare('UPDATE contract_steps SET state = :state, note = :note, done_at = :done_at, done_by_id = :done_by_id WHERE id = :id AND contract_id = :contract_id');
@@ -266,6 +286,35 @@ if ($page === 'step_update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         'id' => $stepId,
         'contract_id' => $contractId,
     ]);
+
+    // Si Decision OPCO (même 2e, 3e...) avec demande-documents, créer une nouvelle étape Decision OPCO
+    if (strpos($step['step_name'], 'Decision OPCO') === 0 && (strpos($note, 'demande-documents') === 0)) {
+        // Récupérer le step_order de l'étape actuelle
+        $orderStmt = $pdo->prepare('SELECT step_order FROM contract_steps WHERE id = :id');
+        $orderStmt->execute(['id' => $stepId]);
+        $currentOrder = (int) $orderStmt->fetchColumn();
+        
+        // Compter combien de "Decision OPCO" existent déjà
+        $countStmt = $pdo->prepare('SELECT COUNT(*) FROM contract_steps WHERE contract_id = :contract_id AND step_name LIKE "Decision OPCO%"');
+        $countStmt->execute(['contract_id' => $contractId]);
+        $decisionCount = (int) $countStmt->fetchColumn() + 1; // +1 pour la nouvelle
+        
+        // Créer le label avec numéro ordinal (2e, 3e, 4e, etc.)
+        $newStepName = 'Decision OPCO ' . $decisionCount . 'e';
+        
+        // Incrémenter les step_order des étapes suivantes
+        $incrementStmt = $pdo->prepare('UPDATE contract_steps SET step_order = step_order + 1 WHERE contract_id = :contract_id AND step_order > :order');
+        $incrementStmt->execute(['contract_id' => $contractId, 'order' => $currentOrder]);
+        
+        // Créer la nouvelle étape Decision OPCO
+        $insertStmt = $pdo->prepare('INSERT INTO contract_steps (contract_id, step_order, step_name, state) VALUES (:contract_id, :step_order, :step_name, :state)');
+        $insertStmt->execute([
+            'contract_id' => $contractId,
+            'step_order' => $currentOrder + 1,
+            'step_name' => $newStepName,
+            'state' => 'pending',
+        ]);
+    }
 
     update_contract_status($pdo, $contractId);
     log_action($pdo, $contractId, (int) $user['id'], 'Mise a jour etape', $step['step_name'] . ': ' . $step['state'] . ' -> ' . $newState);
@@ -292,7 +341,7 @@ if ($page === 'status_update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Supprimer un contrat (mise à la corbeille)
 if ($page === 'contract_delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $user = require_roles($pdo, ['secretaire', 'responsable', 'directeur']);
+    $user = require_roles($pdo, ['secretaire', 'responsable']);
     $contractId = (int) ($_POST['contract_id'] ?? 0);
     
     $contract = fetch_contract_for_detail($pdo, $contractId);
@@ -364,12 +413,12 @@ switch ($page) {
     default:
         $currentUser = require_login($pdo);
         if ($currentUser['role'] === 'etudiant') {
-            $studentContracts = fetch_contracts($pdo);
-            $dashboardContracts = array_values(array_filter($studentContracts, static fn (array $contract): bool => (int) $contract['student_user_id'] === (int) $currentUser['id']));
+            $metrics = student_dashboard_metrics($pdo, (int) $currentUser['id']);
+            $dashboardContracts = $metrics['recent_contracts'];
         } else {
-            $dashboardContracts = dashboard_metrics($pdo)['recent_contracts'];
+            $metrics = dashboard_metrics($pdo);
+            $dashboardContracts = $metrics['recent_contracts'];
         }
-        $metrics = dashboard_metrics($pdo);
         $title = 'Tableau de bord';
         $view = __DIR__ . '/templates/dashboard.php';
         break;

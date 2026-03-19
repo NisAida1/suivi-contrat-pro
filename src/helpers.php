@@ -45,7 +45,7 @@ function get_flashes(): array
 
 function contract_statuses(): array
 {
-    return ['BROUILLON', 'EN_COURS', 'EN_ATTENTE_OPCO', 'CORRECTION', 'VALIDE', 'REFUSE'];
+    return ['BROUILLON', 'EN_COURS', 'EN_ATTENTE_OPCO', 'CORRECTION', 'VALIDE', 'CLOTURE'];
 }
 
 function status_label(string $status): string
@@ -56,7 +56,7 @@ function status_label(string $status): string
         'EN_ATTENTE_OPCO' => 'En attente OPCO',
         'CORRECTION' => 'En correction',
         'VALIDE' => 'Valide',
-        'REFUSE' => 'Refuse',
+        'CLOTURE' => 'Clôturé',
     ];
 
     return $labels[$status] ?? $status;
@@ -66,7 +66,7 @@ function status_class(string $status): string
 {
     return match ($status) {
         'VALIDE' => 'success',
-        'REFUSE' => 'danger',
+        'CLOTURE' => 'danger',
         'EN_ATTENTE_OPCO', 'CORRECTION' => 'warning',
         'EN_COURS' => 'info',
         default => 'secondary',
@@ -100,9 +100,8 @@ function formation_prefix(string $formation): string
 function default_steps(bool $isEuEeaSwiss = false): array
 {
     $steps = [
-        'Dossier ouvert',
-        'Fiche envoyee a l entreprise',
-        'Fiche completee recue de l entreprise',
+        'Fiche envoyee a l entreprise par l ecole',
+        'Fiche completee recue de l entreprise par l ecole',
         'Mail d acceptation etudiant recu',
         'Fiche renvoyee pour correction',
         'Fiche corrigee recue',
@@ -119,10 +118,10 @@ function default_steps(bool $isEuEeaSwiss = false): array
         $steps[] = 'APT refusee';
     }
     
-    $steps[] = 'CERFA envoye a l ecole';
+    $steps[] = 'CERFA recu par l ecole';
+    $steps[] = 'CERFA envoye a l OPCO par l etudiant';
     $steps[] = 'CERFA envoye a l OPCO';
-    $steps[] = 'OPCO valide';
-    $steps[] = 'OPCO refuse';
+    $steps[] = 'Decision OPCO';
     
     return $steps;
 }
@@ -130,11 +129,24 @@ function default_steps(bool $isEuEeaSwiss = false): array
 function student_allowed_steps(): array
 {
     return [
-        'Fiche envoyee a l entreprise',
+        'Fiche envoyee a l entreprise par l ecole',
         'CERFA signe avec l entreprise',
-        'CERFA envoye a l ecole',
+        'CERFA envoye a l OPCO par l etudiant',
         'CERFA envoye a l OPCO',
     ];
+}
+
+function optional_steps(): array
+{
+    return [
+        'CERFA envoye a l OPCO par l etudiant',
+    ];
+}
+
+function is_mandatory_step(string $stepName): bool
+{
+    $optionalSteps = optional_steps();
+    return !in_array($stepName, $optionalSteps, true);
 }
 
 function generate_password(int $length = 10): string
@@ -237,25 +249,56 @@ function generate_dossier_number(PDO $pdo, string $formation): string
 
     return sprintf('%s-%d-%06d', $prefix, $year, $counter);
 }
+function steps_with_custom_choices(): array
+{
+    return [
+        'Decision OPCO' => ['valide', 'refuse', 'demande-documents'],
+    ];
+}
 
+function get_step_custom_choices(string $stepName): ?array
+{
+    foreach (steps_with_custom_choices() as $baseStepName => $choices) {
+        if ($stepName === $baseStepName || strpos($stepName, $baseStepName . ' ') === 0) {
+            return $choices;
+        }
+    }
+
+    return null;
+}
 function update_contract_status(PDO $pdo, int $contractId): void
 {
-    $stmt = $pdo->prepare('SELECT step_name, state FROM contract_steps WHERE contract_id = :contract_id');
+    $stmt = $pdo->prepare('SELECT step_name, state, note FROM contract_steps WHERE contract_id = :contract_id ORDER BY step_order ASC');
     $stmt->execute(['contract_id' => $contractId]);
     $steps = $stmt->fetchAll();
 
     $done = [];
+    $decisionOpcoNote = null;
+    
     foreach ($steps as $step) {
         if ($step['state'] === 'done') {
             $done[] = $step['step_name'];
+            if (strpos($step['step_name'], 'Decision OPCO') === 0) {
+                $decisionOpcoNote = $step['note'] ?? '';
+            }
         }
     }
 
     $status = 'BROUILLON';
-    if (in_array('OPCO valide', $done, true)) {
-        $status = 'VALIDE';
-    } elseif (in_array('OPCO refuse', $done, true)) {
-        $status = 'REFUSE';
+    if ($decisionOpcoNote !== null) {
+        $decisionKey = strpos($decisionOpcoNote, ':') !== false
+            ? trim((string) explode(':', $decisionOpcoNote, 2)[0])
+            : trim($decisionOpcoNote);
+
+        if ($decisionKey === 'valide') {
+            $status = 'VALIDE';
+        } elseif ($decisionKey === 'refuse') {
+            $status = 'CLOTURE';
+        } elseif ($decisionKey === 'demande-documents') {
+            $status = 'EN_ATTENTE_OPCO';
+        } else {
+            $status = 'EN_ATTENTE_OPCO';
+        }
     } elseif (in_array('CERFA envoye a l OPCO', $done, true)) {
         $status = 'EN_ATTENTE_OPCO';
     } elseif (in_array('Fiche renvoyee pour correction', $done, true)) {

@@ -39,6 +39,30 @@ function dashboard_metrics(PDO $pdo): array
     ];
 }
 
+function student_dashboard_metrics(PDO $pdo, int $studentUserId): array
+{
+    $stmt = $pdo->prepare('SELECT COUNT(*) FROM contracts WHERE student_user_id = :student_user_id');
+    $stmt->execute(['student_user_id' => $studentUserId]);
+    $total = (int) $stmt->fetchColumn();
+    
+    $byStatus = [];
+    foreach (contract_statuses() as $status) {
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM contracts WHERE student_user_id = :student_user_id AND status = :status');
+        $stmt->execute(['student_user_id' => $studentUserId, 'status' => $status]);
+        $byStatus[$status] = (int) $stmt->fetchColumn();
+    }
+
+    $stmt = $pdo->prepare('SELECT c.*, u.full_name AS student_name FROM contracts c JOIN users u ON u.id = c.student_user_id WHERE c.student_user_id = :student_user_id ORDER BY c.updated_at DESC LIMIT 10');
+    $stmt->execute(['student_user_id' => $studentUserId]);
+    $recent = $stmt->fetchAll();
+
+    return [
+        'total' => $total,
+        'by_status' => $byStatus,
+        'recent_contracts' => $recent,
+    ];
+}
+
 function fetch_contracts(PDO $pdo, string $query = '', string $status = ''): array
 {
     $sql = 'SELECT c.*, u.full_name AS student_name, u.email AS student_email,
@@ -150,7 +174,7 @@ function stats_summary(PDO $pdo): array
         ];
     }
 
-    $avgDays = (float) $pdo->query("SELECT COALESCE(AVG(DATEDIFF(updated_at, created_at)), 0) FROM contracts WHERE status IN ('VALIDE', 'REFUSE')")->fetchColumn();
+    $avgDays = (float) $pdo->query("SELECT COALESCE(AVG(DATEDIFF(updated_at, created_at)), 0) FROM contracts WHERE status IN ('VALIDE', 'CLOTURE')")->fetchColumn();
 
     return [
         'total' => $metrics['total'],

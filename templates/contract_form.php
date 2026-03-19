@@ -23,7 +23,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Email universitaire <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control bg-light" name="student_email" id="student_email" readonly required>
+                        <input type="email" class="form-control" name="student_email" id="student_email" placeholder="ex: prenom.nom@etu.eilco.univ-littoral.fr" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Formation <span class="text-danger">*</span></label>
@@ -37,10 +37,6 @@
                     <div class="col-md-6">
                         <label class="form-label">Entreprise <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="company_name" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">OPCO <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="opco" required>
                     </div>
                     <div class="col-12">
                         <label class="form-label">Nationalité <span class="text-danger">*</span></label>
@@ -71,26 +67,4 @@
     </div>
 </div>
 
-<script>
-const firstName = document.getElementById('first_name');
-const lastName = document.getElementById('last_name');
-const emailInput = document.getElementById('student_email');
 
-function slugify(value) {
-    return value
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, '-');
-}
-
-function updateEmail() {
-    const first = slugify(firstName.value);
-    const last = slugify(lastName.value);
-    emailInput.value = first && last ? `${first}.${last}@etu.eilco.univ-littoral.fr` : '';
-}
-
-firstName.addEventListener('input', updateEmail);
-lastName.addEventListener('input', updateEmail);
-</script>

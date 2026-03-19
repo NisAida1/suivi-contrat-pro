@@ -7,15 +7,18 @@
     <title><?= h($title ?? 'Suivi Contrat Pro - PHP') ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/styles.css?v=2">
 </head>
-<body class="bg-light">
+<body class="bg-light <?= $currentUser ? 'has-navbar' : '' ?>">
     <?php if ($currentUser): ?>
-        <nav class="navbar navbar-expand-xl navbar-dark bg-primary shadow-sm app-navbar">
+        <nav class="navbar navbar-expand-xl navbar-dark shadow-sm app-navbar fixed-top">
             <div class="container-fluid px-4">
-                <a class="navbar-brand fw-bold d-flex flex-column" href="index.php">
-                    <span>Suivi Contrat Pro</span>
-                    <small class="text-white-50 fw-normal" style="font-size: 0.75rem;"><?= h($currentUser['full_name']) ?></small>
+                <a class="navbar-brand d-flex align-items-center gap-3" href="index.php">
+                    <img src="assets/img/image.png" alt="EILCO" class="app-logo app-logo-nav">
+                    <div class="d-flex flex-column">
+                        <span class="fw-bold app-title">Suivi Contrat Pro</span>
+                        <small class="text-white-50 fw-normal" style="font-size: 0.75rem;"><?= h($currentUser['full_name']) ?></small>
+                    </div>
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>

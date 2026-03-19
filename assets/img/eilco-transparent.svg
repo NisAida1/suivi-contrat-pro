@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 120" role="img" aria-labelledby="eilco-title">
+  <title id="eilco-title">EILCO - École d'Ingénieurs du Littoral Côte d'Opale</title>
+  
+  <!-- Arrière-plan transparent (pas de rectangle de fond) -->
+  
+  <!-- Bordure blanche du cadre -->
+  <rect x="4" y="4" width="372" height="112" fill="none" stroke="#ffffff" stroke-width="2.5" rx="4"/>
+  
+  <!-- Logo EIL en blanc -->
+  <g fill="#ffffff">
+    <!-- Lettre E -->
+    <rect x="32" y="22" width="26" height="5" rx="1"/>
+    <rect x="32" y="22" width="5" height="46" rx="1"/>
+    <rect x="32" y="43" width="20" height="5" rx="1"/>
+    <rect x="32" y="63" width="26" height="5" rx="1"/>
+    
+    <!-- Lettre I avec point -->
+    <circle cx="80" cy="20" r="3.5"/>
+    <rect x="77" y="27" width="5" height="41" rx="1"/>
+    
+    <!-- Lettre L -->
+    <rect x="100" y="22" width="5" height="46" rx="1"/>
+    <rect x="100" y="63" width="26" height="5" rx="1"/>
+  </g>
+  
+  <!-- Texte "Cote d'Opale" en bleu clair -->
+  <g fill="#5eb3e4" font-family="Arial, Helvetica, sans-serif" font-weight="400">
+    <text x="145" y="44" font-size="18">Cote</text>
+    <text x="145" y="64" font-size="18">d'Opale</text>
+  </g>
+  
+  <!-- Ligne de séparation blanche -->
+  <rect x="18" y="80" width="344" height="2" fill="#ffffff"/>
+  
+  <!-- Texte "ÉCOLE D'INGÉNIEURS DU LITTORAL" en blanc -->
+  <text x="24" y="98" font-family="Arial, Helvetica, sans-serif" font-size="10" font-weight="700" fill="#ffffff" letter-spacing="0.8">ÉCOLE D'INGÉNIEURS DU LITTORAL</text>
+</svg>
