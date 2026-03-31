@@ -1,4 +1,11 @@
-<?php $formations = ['Cycle Ingenieur Informatique', 'Cycle Ingenieur Genie Industriel', 'Cycle Ingenieur Genie Energetique', 'Cycle Ingenieur Environnement']; ?>
+<?php
+$formations = [
+    'Cycle Ingenieur Informatique',
+    'Cycle Ingenieur Genie Industriel',
+    'Cycle Ingenieur Genie Energetique et Environnement',
+    'Cycle Ingenieur Agroalimentaire',
+];
+?>
 <div class="row justify-content-center">
     <div class="col-lg-9">
         <div class="mb-4">
@@ -33,6 +40,10 @@
                                 <option value="<?= h($formation) ?>"><?= h($formation) ?></option>
                             <?php endforeach; ?>
                         </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Année universitaire <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="academic_year" placeholder="ex: 2025-2026" pattern="\d{4}-\d{4}" required>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Entreprise <span class="text-danger">*</span></label>

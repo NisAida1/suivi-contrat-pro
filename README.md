@@ -29,15 +29,59 @@ Le projet est basé sur PHP natif, MySQL, des templates PHP et du CSS.
 - `database/install.php`: installation + jeux de données démo
 
 ## Installation
+0. Configuration environnement:
+   - Copier `.env.example` vers `.env`
+   - Renseigner vos valeurs de connexion DB et SMTP
+
 1. Créer la base et les tables:
    - Soit exécuter `database/schema.sql` dans MySQL
    - Soit lancer `php database/install.php`
 2. Configurer la connexion DB dans `config/app.php`
    - ou via les variables: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`
+   - note: `DB_PASSWORD` est aussi supporté
 3. Lancer l'application:
    - `php -S localhost:8000`
 4. Ouvrir:
    - `http://localhost:8000/index.php?page=login`
+
+## Hebergement Apache (OVH)
+
+Le projet est maintenant pret pour Apache avec le fichier `.htaccess` fourni:
+- routage des URLs vers `index.php`
+- blocage de l acces web direct a `config/`, `src/`, `database/`, `templates/`
+- headers de securite de base
+
+### 1. Deployer les fichiers
+- Uploader tout le contenu du projet sur votre hebergement Apache
+- Verifier que `.htaccess` est bien present a la racine du projet deploye
+
+### 2. Configurer la base de donnees
+
+Option A (recommandee): variables d environnement Apache
+- `DB_HOST`
+- `DB_PORT`
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASS`
+- `DB_CHARSET` (optionnel, `utf8mb4` par defaut)
+
+Option B: modifier `config/app.php` directement si les variables d environnement ne sont pas disponibles.
+
+### 3. Configurer l URL applicative
+
+Definir `APP_URL` pour les liens d emails et les redirections absolues, par exemple:
+- `https://projetsuivicp.eilco-ulco.fr`
+
+Si `APP_URL` n est pas defini, l application essaie de detecter automatiquement l URL depuis la requete Apache.
+
+Le fichier `.env` (a la racine du projet) est charge automatiquement au demarrage.
+
+### 4. Initialiser la base
+- Importer `database/schema.sql` via phpMyAdmin OVH
+
+### 5. Tester
+- Ouvrir: `https://votre-domaine/index.php?page=login`
+- Verifier ensuite qu une URL propre comme `https://votre-domaine/login` fonctionne aussi
 
 ## Comptes demo (4 comptes)
 - Étudiant: `student@demo.com` / `student123`

@@ -2,6 +2,50 @@
 
 declare(strict_types=1);
 
+function load_dotenv_for_install(string $path): void
+{
+    if (!is_file($path) || !is_readable($path)) {
+        return;
+    }
+
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    if ($lines === false) {
+        return;
+    }
+
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || str_starts_with($line, '#')) {
+            continue;
+        }
+
+        $parts = explode('=', $line, 2);
+        if (count($parts) !== 2) {
+            continue;
+        }
+
+        $key = trim($parts[0]);
+        $value = trim($parts[1]);
+        if ($key === '') {
+            continue;
+        }
+
+        if ((str_starts_with($value, '"') && str_ends_with($value, '"')) || (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
+            $value = substr($value, 1, -1);
+        }
+
+        if (getenv($key) !== false) {
+            continue;
+        }
+
+        putenv($key . '=' . $value);
+        $_ENV[$key] = $value;
+        $_SERVER[$key] = $value;
+    }
+}
+
+load_dotenv_for_install(__DIR__ . '/../.env');
+
 $config = require __DIR__ . '/../config/app.php';
 require_once __DIR__ . '/../src/helpers.php';
 
@@ -15,6 +59,11 @@ $schema = file_get_contents(__DIR__ . '/schema.sql');
 if ($schema === false) {
     exit("Impossible de lire schema.sql\n");
 }
+
+$targetDbName = $config['db']['name'];
+$schema = preg_replace('/^CREATE DATABASE IF NOT EXISTS\s+[^\s;]+/mi', 'CREATE DATABASE IF NOT EXISTS ' . $targetDbName, $schema) ?? $schema;
+$schema = preg_replace('/^USE\s+[^\s;]+\s*;?/mi', 'USE ' . $targetDbName . ';', $schema) ?? $schema;
+
 $serverPdo->exec($schema);
 
 $pdo = create_pdo($config['db']);
@@ -43,12 +92,13 @@ $responsableId = (int) $pdo->query("SELECT id FROM users WHERE email = 'responsa
 $exists = (int) $pdo->query("SELECT COUNT(*) FROM contracts WHERE dossier_number = 'INFO-" . date('Y') . "-000001'")->fetchColumn();
 if ($exists === 0) {
     $dossierNumber = 'INFO-' . date('Y') . '-000001';
-    $insertContract = $pdo->prepare('INSERT INTO contracts (dossier_number, student_user_id, company_name, formation, opco, status, current_step, created_at, updated_at) VALUES (:dossier_number, :student_user_id, :company_name, :formation, :opco, :status, :current_step, NOW(), NOW())');
+    $insertContract = $pdo->prepare('INSERT INTO contracts (dossier_number, student_user_id, company_name, formation, academic_year, opco, status, current_step, created_at, updated_at) VALUES (:dossier_number, :student_user_id, :company_name, :formation, :academic_year, :opco, :status, :current_step, NOW(), NOW())');
     $insertContract->execute([
         'dossier_number' => $dossierNumber,
         'student_user_id' => $studentId,
         'company_name' => 'Entreprise Demo SARL',
-        'formation' => 'Cycle Ingenieur Informatique',
+        'formation' => 'INFO',
+        'academic_year' => date('Y') . '-' . (date('Y') + 1),
         'opco' => 'OPCO Demo',
         'status' => 'EN_COURS',
         'current_step' => default_steps()[0],

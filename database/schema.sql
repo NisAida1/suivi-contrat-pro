@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS contracts (
     student_user_id INT NOT NULL,
     company_name VARCHAR(200) NOT NULL,
     formation VARCHAR(200) NULL,
+    academic_year VARCHAR(20) NULL,
     opco VARCHAR(200) NULL,
     is_eu_eea_swiss TINYINT(1) NOT NULL DEFAULT 0,
     status VARCHAR(30) NOT NULL DEFAULT 'BROUILLON',

@@ -159,6 +159,7 @@
                 <p><strong>Étudiant :</strong><br><?= h($contract['student_name']) ?><br><small class="text-muted"><?= h($contract['student_email']) ?></small></p>
                 <p><strong>Numéro :</strong><br><?= h($contract['student_number'] ?? '') ?></p>
                 <p><strong>Formation :</strong><br><?= h($contract['formation']) ?></p>
+                <p><strong>Année universitaire :</strong><br><?= h($contract['academic_year'] ?? '-') ?></p>
                 <p><strong>Entreprise :</strong><br><?= h($contract['company_name']) ?></p>
                 <p class="mb-0"><strong>Statut :</strong><br><?= h(status_label($contract['status'])) ?></p>
             </div>

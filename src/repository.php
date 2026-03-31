@@ -75,7 +75,7 @@ function fetch_contracts(PDO $pdo, string $query = '', string $status = ''): arr
     $params = [];
 
     if ($query !== '') {
-        $sql .= ' AND (c.dossier_number LIKE :term OR c.company_name LIKE :term OR u.full_name LIKE :term OR u.email LIKE :term)';
+        $sql .= ' AND (c.dossier_number LIKE :term OR c.company_name LIKE :term OR c.academic_year LIKE :term OR u.full_name LIKE :term OR u.email LIKE :term)';
         $params['term'] = '%' . $query . '%';
     }
 

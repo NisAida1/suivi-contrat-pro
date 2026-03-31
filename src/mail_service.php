@@ -177,6 +177,7 @@ function send_email_simple(string $to, string $subject, string $body, bool $isHt
 function send_student_welcome_email(string $email, string $fullName, string $password, string $dossierNumber, string $companyName): bool
 {
     $subject = 'Votre dossier de contrat a été créé - EILCO';
+    $loginUrl = app_url('index.php?page=login');
     
     $body = <<<HTML
 <!DOCTYPE html>
@@ -222,7 +223,7 @@ function send_student_welcome_email(string $email, string $fullName, string $pas
             <p>Vous pouvez maintenant vous connecter à la plateforme pour suivre l'avancement de votre dossier.</p>
             
             <div style="text-align: center;">
-                <a href="http://localhost:8000/index.php?page=login" class="btn">Se connecter</a>
+                <a href="{$loginUrl}" class="btn">Se connecter</a>
             </div>
         </div>
         
@@ -250,7 +251,7 @@ HTML;
 function send_password_reset_email(string $email, string $fullName, string $resetToken): bool
 {
     $subject = 'Réinitialisation de votre mot de passe - EILCO';
-    $resetLink = "http://localhost:8000/index.php?page=reset_password&token=" . urlencode($resetToken);
+    $resetLink = app_url('index.php?page=reset_password&token=' . urlencode($resetToken));
     
     $body = <<<HTML
 <!DOCTYPE html>

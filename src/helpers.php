@@ -23,10 +23,47 @@ function h(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+function app_base_url(): string
+{
+    static $baseUrl = null;
+    if ($baseUrl !== null) {
+        return $baseUrl;
+    }
+
+    $config = require __DIR__ . '/../config/app.php';
+    $configured = trim((string) ($config['app_url'] ?? ''));
+    if ($configured !== '') {
+        $baseUrl = rtrim($configured, '/');
+        return $baseUrl;
+    }
+
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443)
+        || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+    $scheme = $isHttps ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
+    $basePath = rtrim(str_replace('\\', '/', dirname($scriptName)), '/');
+
+    $baseUrl = $scheme . '://' . $host . ($basePath !== '' ? $basePath : '');
+
+    return $baseUrl;
+}
+
+function app_url(string $path = ''): string
+{
+    $base = app_base_url();
+    if ($path === '') {
+        return $base;
+    }
+
+    return $base . '/' . ltrim($path, '/');
+}
+
 function redirect_to(string $page, array $params = []): never
 {
     $query = http_build_query(array_merge(['page' => $page], $params));
-    header('Location: index.php?' . $query);
+    header('Location: ' . app_url('index.php?' . $query));
     exit;
 }
 
@@ -127,10 +164,16 @@ function step_state_label(string $state): string
 function formation_prefix(string $formation): string
 {
     $map = [
+        'INFO' => 'INFO',
+        'GI' => 'GI',
+        'GEE' => 'GEE',
+        'AGRO' => 'AGRO',
         'Cycle Ingenieur Informatique' => 'INFO',
         'Cycle Ingenieur Genie Industriel' => 'GI',
-        'Cycle Ingenieur Genie Energetique' => 'GE',
-        'Cycle Ingenieur Environnement' => 'ENVER',
+        'Cycle Ingenieur Genie Energetique' => 'GEE',
+        'Cycle Ingenieur Genie Energetique et Environnement' => 'GEE',
+        'Cycle Ingenieur Agroalimentaire' => 'AGRO',
+        'Cycle Ingenieur Environnement' => 'AGRO',
     ];
 
     return $map[$formation] ?? 'GEN';

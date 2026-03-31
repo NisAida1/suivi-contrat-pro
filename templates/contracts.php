@@ -24,7 +24,7 @@
                     <input type="hidden" name="page" value="contracts">
                     <div class="col-md-5">
                         <label class="form-label">Recherche</label>
-                        <input type="text" class="form-control" name="q" value="<?= h($search ?? '') ?>" placeholder="Nom, entreprise, numéro de dossier">
+                        <input type="text" class="form-control" name="q" value="<?= h($search ?? '') ?>" placeholder="Nom, entreprise, numéro de dossier, année universitaire">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Statut</label>
@@ -49,6 +49,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Dossier</th>
+                            <th>Année univ.</th>
                             <th>Étudiant</th>
                             <th>Entreprise</th>
                             <th>Statut</th>
@@ -58,11 +59,12 @@
                     </thead>
                     <tbody>
                         <?php if ($contracts === []): ?>
-                            <tr><td colspan="6" class="text-center py-4">Aucun contrat trouvé.</td></tr>
+                            <tr><td colspan="7" class="text-center py-4">Aucun contrat trouvé.</td></tr>
                         <?php else: ?>
                             <?php foreach ($contracts as $contract): ?>
                                 <tr>
                                     <td class="fw-bold text-primary"><?= h($contract['dossier_number']) ?></td>
+                                    <td><?= h($contract['academic_year'] ?? '-') ?></td>
                                     <td>
                                         <div><?= h($contract['student_name']) ?></div>
                                         <small class="text-muted"><?= h($contract['student_email']) ?></small>

@@ -143,10 +143,16 @@ if ($page === 'contract_create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $studentEmail = trim((string) ($_POST['student_email'] ?? ''));
     $companyName = trim((string) ($_POST['company_name'] ?? ''));
     $formation = trim((string) ($_POST['formation'] ?? ''));
+    $academicYear = trim((string) ($_POST['academic_year'] ?? ''));
     $isEuEeaSwiss = (int) ($_POST['is_eu_eea_swiss'] ?? 0) === 1;
 
-    if ($firstName === '' || $lastName === '' || $studentNumber === '' || $studentEmail === '' || $companyName === '' || $formation === '' || !isset($_POST['is_eu_eea_swiss'])) {
+    if ($firstName === '' || $lastName === '' || $studentNumber === '' || $studentEmail === '' || $companyName === '' || $formation === '' || $academicYear === '' || !isset($_POST['is_eu_eea_swiss'])) {
         set_flash('danger', 'Tous les champs sont obligatoires.');
+        redirect_to('contract_create');
+    }
+
+    if (!preg_match('/^\d{4}-\d{4}$/', $academicYear)) {
+        set_flash('danger', 'Le format de l\'annee universitaire doit etre AAAA-AAAA (ex: 2025-2026).');
         redirect_to('contract_create');
     }
 
@@ -177,12 +183,13 @@ if ($page === 'contract_create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $dossierNumber = generate_dossier_number($pdo, $formation);
-        $insertContract = $pdo->prepare('INSERT INTO contracts (dossier_number, student_user_id, company_name, formation, is_eu_eea_swiss, status, current_step, created_at, updated_at) VALUES (:dossier_number, :student_user_id, :company_name, :formation, :is_eu_eea_swiss, :status, :current_step, NOW(), NOW())');
+        $insertContract = $pdo->prepare('INSERT INTO contracts (dossier_number, student_user_id, company_name, formation, academic_year, is_eu_eea_swiss, status, current_step, created_at, updated_at) VALUES (:dossier_number, :student_user_id, :company_name, :formation, :academic_year, :is_eu_eea_swiss, :status, :current_step, NOW(), NOW())');
         $insertContract->execute([
             'dossier_number' => $dossierNumber,
             'student_user_id' => $studentId,
             'company_name' => $companyName,
             'formation' => $formation,
+            'academic_year' => $academicYear,
             'is_eu_eea_swiss' => $isEuEeaSwiss ? 1 : 0,
             'status' => 'EN_COURS',
             'current_step' => default_steps($isEuEeaSwiss)[0],
