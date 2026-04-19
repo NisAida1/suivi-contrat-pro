@@ -191,12 +191,16 @@ function stats_summary(PDO $pdo): array
 function create_password_reset_token(PDO $pdo, int $userId): string
 {
     $token = bin2hex(random_bytes(32));
+    $tokenHash = hash('sha256', $token);
     $expiresAt = date('Y-m-d H:i:s', time() + 3600); // 1 heure
+
+    $invalidateStmt = $pdo->prepare('UPDATE password_reset_tokens SET used = 1 WHERE user_id = :user_id AND used = 0');
+    $invalidateStmt->execute(['user_id' => $userId]);
     
     $stmt = $pdo->prepare('INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (:user_id, :token, :expires_at)');
     $stmt->execute([
         'user_id' => $userId,
-        'token' => $token,
+        'token' => $tokenHash,
         'expires_at' => $expiresAt,
     ]);
     
@@ -208,15 +212,20 @@ function create_password_reset_token(PDO $pdo, int $userId): string
  */
 function validate_reset_token(PDO $pdo, string $token): ?array
 {
+    $tokenHash = hash('sha256', $token);
+
     $stmt = $pdo->prepare('
         SELECT prt.*, u.id as user_id, u.email, u.full_name 
         FROM password_reset_tokens prt
         JOIN users u ON u.id = prt.user_id
-        WHERE prt.token = :token 
+        WHERE (prt.token = :token_hash OR prt.token = :token_plain)
         AND prt.used = 0 
         AND prt.expires_at > NOW()
     ');
-    $stmt->execute(['token' => $token]);
+    $stmt->execute([
+        'token_hash' => $tokenHash,
+        'token_plain' => $token,
+    ]);
     
     return $stmt->fetch() ?: null;
 }
@@ -226,8 +235,12 @@ function validate_reset_token(PDO $pdo, string $token): ?array
  */
 function mark_token_as_used(PDO $pdo, string $token): void
 {
-    $stmt = $pdo->prepare('UPDATE password_reset_tokens SET used = 1 WHERE token = :token');
-    $stmt->execute(['token' => $token]);
+    $tokenHash = hash('sha256', $token);
+    $stmt = $pdo->prepare('UPDATE password_reset_tokens SET used = 1 WHERE token = :token_hash OR token = :token_plain');
+    $stmt->execute([
+        'token_hash' => $tokenHash,
+        'token_plain' => $token,
+    ]);
 }
 
 /**

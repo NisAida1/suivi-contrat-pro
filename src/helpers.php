@@ -15,12 +15,142 @@ function create_pdo(array $db): PDO
     return new PDO($dsn, $db['user'], $db['pass'], [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_TIMEOUT => 5,
     ]);
 }
 
 function h(?string $value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+function send_security_headers(): void
+{
+    if (headers_sent()) {
+        return;
+    }
+
+    header('X-Frame-Options: DENY');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
+
+    header(
+        "Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; script-src 'self' https://cdn.jsdelivr.net; font-src 'self' data: https://cdnjs.cloudflare.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests"
+    );
+}
+
+function csrf_token(): string
+{
+    if (!isset($_SESSION['_csrf']) || !is_string($_SESSION['_csrf']) || $_SESSION['_csrf'] === '') {
+        $_SESSION['_csrf'] = bin2hex(random_bytes(32));
+    }
+
+    return $_SESSION['_csrf'];
+}
+
+function csrf_field(): string
+{
+    return '<input type="hidden" name="_csrf" value="' . h(csrf_token()) . '">';
+}
+
+function verify_csrf_token(?string $token): bool
+{
+    if (!is_string($token) || $token === '') {
+        return false;
+    }
+
+    return hash_equals(csrf_token(), $token);
+}
+
+function password_strength_error(string $password): ?string
+{
+    if (strlen($password) < 12) {
+        return 'Le mot de passe doit contenir au moins 12 caractères.';
+    }
+
+    if (!preg_match('/[a-z]/', $password) || !preg_match('/[A-Z]/', $password) || !preg_match('/\d/', $password)) {
+        return 'Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre.';
+    }
+
+    return null;
+}
+
+function validate_email(string $email): bool
+{
+    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false && strlen($email) <= 254;
+}
+
+function rate_limit_by_ip(PDO $pdo, string $action, int $maxAttempts = 10, int $windowSeconds = 3600): bool
+{
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $key = sha1($action . ':' . $ip);
+    $lockFile = sys_get_temp_dir() . '/ratelimit_' . $key;
+    
+    if (file_exists($lockFile)) {
+        $data = json_decode(file_get_contents($lockFile), true);
+        if ($data && isset($data['until']) && $data['until'] > time()) {
+            return false;
+        }
+        @unlink($lockFile);
+    }
+    
+    return true;
+}
+
+function record_rate_limit_attempt(string $action, int $maxAttempts = 10, int $windowSeconds = 3600): void
+{
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $key = sha1($action . ':' . $ip);
+    $lockFile = sys_get_temp_dir() . '/ratelimit_' . $key;
+    
+    $attempts = 1;
+    $until = time() + $windowSeconds;
+    
+    if (file_exists($lockFile)) {
+        $data = json_decode(file_get_contents($lockFile), true);
+        if ($data && isset($data['attempts'])) {
+            $attempts = (int)$data['attempts'] + 1;
+            if ($attempts >= $maxAttempts) {
+                $until = time() + 1800; // 30 minutes after max attempts
+            }
+        }
+    }
+    
+    file_put_contents($lockFile, json_encode(['attempts' => $attempts, 'until' => $until]), LOCK_EX);
+}
+
+function login_is_locked(): bool
+{
+    $lockUntil = $_SESSION['login_lock_until'] ?? 0;
+    return is_int($lockUntil) && $lockUntil > time();
+}
+
+function login_lock_remaining_seconds(): int
+{
+    $lockUntil = $_SESSION['login_lock_until'] ?? 0;
+    if (!is_int($lockUntil) || $lockUntil <= time()) {
+        return 0;
+    }
+
+    return $lockUntil - time();
+}
+
+function register_login_failure(): void
+{
+    $attempts = (int) ($_SESSION['login_failed_attempts'] ?? 0);
+    $attempts++;
+    $_SESSION['login_failed_attempts'] = $attempts;
+
+    if ($attempts >= 5) {
+        $_SESSION['login_lock_until'] = time() + 300;
+        $_SESSION['login_failed_attempts'] = 0;
+    }
+}
+
+function clear_login_failures(): void
+{
+    unset($_SESSION['login_failed_attempts'], $_SESSION['login_lock_until']);
 }
 
 function app_base_url(): string
@@ -60,7 +190,7 @@ function app_url(string $path = ''): string
     return $base . '/' . ltrim($path, '/');
 }
 
-function redirect_to(string $page, array $params = []): never
+function redirect_to(string $page, array $params = []): void
 {
     $query = http_build_query(array_merge(['page' => $page], $params));
     header('Location: ' . app_url('index.php?' . $query));
@@ -101,13 +231,19 @@ function status_label(string $status): string
 
 function status_class(string $status): string
 {
-    return match ($status) {
-        'VALIDE' => 'success',
-        'CLOTURE' => 'danger',
-        'EN_ATTENTE_OPCO', 'CORRECTION' => 'warning',
-        'EN_COURS' => 'info',
-        default => 'secondary',
-    };
+    switch ($status) {
+        case 'VALIDE':
+            return 'success';
+        case 'CLOTURE':
+            return 'danger';
+        case 'EN_ATTENTE_OPCO':
+        case 'CORRECTION':
+            return 'warning';
+        case 'EN_COURS':
+            return 'info';
+        default:
+            return 'secondary';
+    }
 }
 
 function role_label(string $role): string
@@ -231,7 +367,54 @@ function is_mandatory_step(string $stepName): bool
     return !in_array($stepName, $optionalSteps, true);
 }
 
-function generate_password(int $length = 10): string
+function can_complete_step(array $allSteps, int $currentStepOrder): bool
+{
+    // La première étape peut toujours être complétée
+    if ($currentStepOrder === 1) {
+        return true;
+    }
+    
+    // Vérifier que l'étape précédente est complétée
+    foreach ($allSteps as $step) {
+        if ((int) $step['step_order'] === $currentStepOrder - 1) {
+            // L'étape précédente doit être complétée (état 'done')
+            return $step['state'] === 'done';
+        }
+    }
+    
+    // Si pas d'étape précédente trouvée, ne pas permettre (sécurité)
+    return false;
+}
+
+/**
+ * Vérifier si une étape est mutuellement exclusive avec une autre
+ * (par exemple: APT obtenue et APT refusée)
+ */
+function is_step_mutually_exclusive_with_done(array $allSteps, string $stepName): bool
+{
+    // Définir les paires mutuellement exclusives
+    $exclusiveSteps = [
+        'APT obtenue' => 'APT refusee',
+        'APT refusee' => 'APT obtenue',
+    ];
+    
+    if (!isset($exclusiveSteps[$stepName])) {
+        return false;
+    }
+    
+    $exclusiveWith = $exclusiveSteps[$stepName];
+    
+    // Vérifier si l'étape exclusive est déjà complétée
+    foreach ($allSteps as $step) {
+        if ($step['step_name'] === $exclusiveWith && $step['state'] === 'done') {
+            return true; // L'étape exclusive est complétée, donc cette étape ne peut pas l'être
+        }
+    }
+    
+    return false;
+}
+
+function generate_password(int $length = 14): string
 {
     $alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     $password = '';

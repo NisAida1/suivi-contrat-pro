@@ -2,35 +2,94 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/src/bootstrap.php';
+try {
+    require __DIR__ . '/src/bootstrap.php';
+} catch (Throwable $exception) {
+    error_log('Bootstrap failure: ' . $exception->getMessage());
+    http_response_code(500);
+    echo 'Erreur interne au demarrage de l application.';
+    exit;
+}
+
+set_exception_handler(static function (Throwable $exception): void {
+    error_log('Unhandled exception: ' . $exception->getMessage());
+    http_response_code(500);
+    echo 'Erreur interne du serveur. Consultez les logs applicatifs.';
+    exit;
+});
 
 $page = $_GET['page'] ?? 'dashboard';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrfToken = $_POST['_csrf'] ?? '';
+    $csrfToken = is_string($csrfToken) ? $csrfToken : '';
+
+    if (!verify_csrf_token($csrfToken)) {
+        set_flash('danger', 'Session expirée ou requête invalide. Veuillez réessayer.');
+        redirect_to('login');
+    }
+}
+
 if ($page === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = strtolower(trim($_POST['email'] ?? ''));
-    $password = (string) ($_POST['password'] ?? '');
+    try {
+        if (login_is_locked()) {
+            $remaining = login_lock_remaining_seconds();
+            set_flash('danger', 'Trop de tentatives. Réessayez dans ' . max(1, $remaining) . ' seconde(s).');
+            redirect_to('login');
+        }
 
-    if ($email === '' || $password === '') {
-        set_flash('danger', 'Veuillez renseigner votre email et votre mot de passe.');
+        if (!rate_limit_by_ip($pdo, 'login', 10, 3600)) {
+            http_response_code(429);
+            set_flash('danger', 'Trop de tentatives de connexion. Réessayez plus tard.');
+            redirect_to('login');
+        }
+
+        $email = strtolower(trim($_POST['email'] ?? ''));
+        $password = (string) ($_POST['password'] ?? '');
+
+        if ($email === '' || $password === '') {
+            set_flash('danger', 'Veuillez renseigner votre email et votre mot de passe.');
+            record_rate_limit_attempt('login');
+            redirect_to('login');
+        }
+
+        if (!validate_email($email)) {
+            set_flash('danger', 'Identifiants invalides.');
+            record_rate_limit_attempt('login');
+            redirect_to('login');
+        }
+
+        $user = find_user_by_email($pdo, $email);
+        $passwordHash = '';
+        if (is_array($user) && isset($user['password_hash']) && is_string($user['password_hash'])) {
+            $passwordHash = $user['password_hash'];
+        }
+
+        if (!$user || $passwordHash === '' || !password_verify($password, $passwordHash)) {
+            register_login_failure();
+            record_rate_limit_attempt('login');
+            error_log('Failed login attempt for: ' . $email . ' from ' . ($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+            set_flash('danger', 'Identifiants invalides.');
+            redirect_to('login');
+        }
+
+        clear_login_failures();
+        session_regenerate_id(true);
+        $_SESSION['user_id'] = (int) $user['id'];
+        
+        // Vérifier si l'utilisateur doit changer son mot de passe
+        if (isset($user['must_change_password']) && (int) $user['must_change_password'] === 1) {
+            set_flash('warning', 'Vous devez changer votre mot de passe provisoire.');
+            redirect_to('change_password');
+        }
+        
+        set_flash('success', 'Connexion réussie.');
+        redirect_to('dashboard');
+    } catch (Throwable $exception) {
+        error_log('Login failure: ' . $exception->getMessage());
+        set_flash('danger', 'Erreur serveur pendant la connexion. Verifiez la base de donnees et le schema.');
         redirect_to('login');
     }
-
-    $user = find_user_by_email($pdo, $email);
-    if (!$user || !password_verify($password, $user['password_hash'])) {
-        set_flash('danger', 'Identifiants invalides.');
-        redirect_to('login');
-    }
-
-    $_SESSION['user_id'] = (int) $user['id'];
-    
-    // Vérifier si l'utilisateur doit changer son mot de passe
-    if ((int) $user['must_change_password'] === 1) {
-        set_flash('warning', 'Vous devez changer votre mot de passe provisoire.');
-        redirect_to('change_password');
-    }
-    
-    set_flash('success', 'Connexion réussie.');
-    redirect_to('dashboard');
 }
 
 if ($page === 'logout') {
@@ -63,8 +122,9 @@ if ($page === 'change_password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect_to('change_password');
     }
     
-    if (strlen($newPassword) < 6) {
-        set_flash('danger', 'Le mot de passe doit contenir au moins 6 caractères.');
+    $passwordError = password_strength_error($newPassword);
+    if ($passwordError !== null) {
+        set_flash('danger', $passwordError);
         redirect_to('change_password');
     }
     
@@ -76,6 +136,55 @@ if ($page === 'change_password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     update_user_password($pdo, (int) $currentUser['id'], $newPassword, false);
     set_flash('success', 'Votre mot de passe a été changé avec succès.');
     redirect_to('dashboard');
+}
+
+// Demander un code de changement de mot de passe (accessible depuis dashboard)
+if ($page === 'change_password_send_code' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $currentUser = require_login($pdo);
+    
+    // Générer un token et envoyer par email
+    try {
+        $token = create_password_reset_token($pdo, (int) $currentUser['id']);
+        send_password_reset_email(
+            $currentUser['email'], 
+            $currentUser['full_name'], 
+            $token
+        );
+        set_flash('success', 'Un code de confirmation a été envoyé à votre adresse email. Vérifiez votre boîte de réception.');
+        redirect_to('reset_password_with_token');
+    } catch (Throwable $exception) {
+        error_log('Error sending password reset email: ' . $exception->getMessage());
+        set_flash('danger', 'Erreur lors de l\'envoi du code. Veuillez réessayer.');
+        redirect_to('change_password_request');
+    }
+}
+
+// Vérifier le code de réinitialisation reçu par email
+if ($page === 'reset_password_with_token' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $currentUser = require_login($pdo);
+    
+    $token = trim((string) ($_POST['token'] ?? ''));
+    
+    if ($token === '') {
+        set_flash('danger', 'Veuillez entrer le code de confirmation.');
+        redirect_to('reset_password_with_token');
+    }
+    
+    $tokenData = validate_reset_token($pdo, $token);
+    
+    if (!$tokenData) {
+        set_flash('danger', 'Code invalide ou expiré. Veuillez demander un nouveau code.');
+        redirect_to('reset_password_with_token');
+    }
+    
+    // Vérifier que le token appartient à l'utilisateur connecté
+    if ((int) $tokenData['user_id'] !== (int) $currentUser['id']) {
+        set_flash('danger', 'Code invalide pour votre compte.');
+        redirect_to('reset_password_with_token');
+    }
+    
+    // Rediriger vers la page de réinitialisation du mot de passe avec le token
+    redirect_to('reset_password', ['token' => $token]);
 }
 
 // Mot de passe oublié - afficher le formulaire ou traiter la demande
@@ -122,8 +231,9 @@ if ($page === 'reset_password' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         redirect_to('reset_password', ['token' => $token]);
     }
     
-    if (strlen($newPassword) < 6) {
-        set_flash('danger', 'Le mot de passe doit contenir au moins 6 caractères.');
+    $passwordError = password_strength_error($newPassword);
+    if ($passwordError !== null) {
+        set_flash('danger', $passwordError);
         redirect_to('reset_password', ['token' => $token]);
     }
     
@@ -146,8 +256,30 @@ if ($page === 'contract_create' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $academicYear = trim((string) ($_POST['academic_year'] ?? ''));
     $isEuEeaSwiss = (int) ($_POST['is_eu_eea_swiss'] ?? 0) === 1;
 
+    $validFormations = [
+        'Cycle Ingenieur Informatique',
+        'Cycle Ingenieur Genie Industriel',
+        'Cycle Ingenieur Genie Energetique et Environnement',
+        'Cycle Ingenieur Agroalimentaire',
+    ];
+
     if ($firstName === '' || $lastName === '' || $studentNumber === '' || $studentEmail === '' || $companyName === '' || $formation === '' || $academicYear === '' || !isset($_POST['is_eu_eea_swiss'])) {
         set_flash('danger', 'Tous les champs sont obligatoires.');
+        redirect_to('contract_create');
+    }
+
+    if (!validate_email($studentEmail)) {
+        set_flash('danger', 'L\'adresse email de l\'etudiant est invalide.');
+        redirect_to('contract_create');
+    }
+
+    if (!in_array($formation, $validFormations, true)) {
+        set_flash('danger', 'Formation invalide.');
+        redirect_to('contract_create');
+    }
+
+    if (strlen($firstName) > 100 || strlen($lastName) > 100 || strlen($companyName) > 200 || strlen($studentNumber) > 50) {
+        set_flash('danger', 'Certains champs sont trop longs.');
         redirect_to('contract_create');
     }
 
@@ -249,6 +381,23 @@ if ($page === 'step_update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$contract || !$step || !can_view_contract($user, $contract)) {
         http_response_code(404);
         exit('Dossier ou etape introuvable.');
+    }
+
+    // *** NOUVEAU: Vérifier les dépendances entre les étapes ***
+    if (!can_complete_step($contract['steps'], (int) $step['step_order'])) {
+        set_flash('danger', 'Cette étape ne peut pas être complétée. Complétez d\'abord les étapes précédentes.');
+        redirect_to('contract_detail', ['id' => $contractId]);
+    }
+
+    // *** NOUVEAU: Vérifier l'exclusivité mutuelle (ex: APT obtenue vs APT refusée) ***
+    if ($newState === 'done' && is_step_mutually_exclusive_with_done($contract['steps'], $step['step_name'])) {
+        $exclusiveSteps = [
+            'APT obtenue' => 'APT refusee',
+            'APT refusee' => 'APT obtenue',
+        ];
+        $exclusiveName = $exclusiveSteps[$step['step_name']] ?? 'l\'étape exclusive';
+        set_flash('danger', "Impossible de compléter cette étape. L'étape \"$exclusiveName\" est déjà complétée.");
+        redirect_to('contract_detail', ['id' => $contractId]);
     }
 
     if ($user['role'] === 'etudiant') {
@@ -399,6 +548,18 @@ switch ($page) {
     case 'forgot_password':
         $title = 'Mot de passe oublié';
         $view = __DIR__ . '/templates/forgot_password.php';
+        break;
+
+    case 'change_password_request':
+        $currentUser = require_login($pdo);
+        $title = 'Changer mon mot de passe';
+        $view = __DIR__ . '/templates/change_password_request.php';
+        break;
+
+    case 'reset_password_with_token':
+        $currentUser = require_login($pdo);
+        $title = 'Entrer le code de réinitialisation';
+        $view = __DIR__ . '/templates/reset_password_with_token.php';
         break;
 
     case 'reset_password':

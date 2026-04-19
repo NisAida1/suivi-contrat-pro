@@ -2,9 +2,21 @@
 
 declare(strict_types=1);
 
-$env = static function (string $key, mixed $default = null): mixed {
+$env = static function (string $key, $default = null) {
     $value = getenv($key);
-    return $value !== false ? $value : $default;
+    if ($value !== false) {
+        return $value;
+    }
+
+    if (array_key_exists($key, $_ENV)) {
+        return $_ENV[$key];
+    }
+
+    if (array_key_exists($key, $_SERVER)) {
+        return $_SERVER[$key];
+    }
+
+    return $default;
 };
 
 /**

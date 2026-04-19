@@ -12,6 +12,7 @@
                     <?php if (in_array($currentUser['role'], ['secretaire', 'responsable'], true)): ?>
                         <form method="post" action="index.php?page=contract_delete" class="mt-2" 
                               onsubmit="return confirm('Voulez-vous supprimer ce dossier ?\n\nLe dossier sera déplacé dans la corbeille et pourra être restauré.');">
+                            <?= csrf_field() ?>
                             <input type="hidden" name="contract_id" value="<?= (int) $contract['id'] ?>">
                             <button type="submit" class="btn btn-sm btn-outline-danger">
                                 <i class="fas fa-trash"></i> Supprimer
@@ -65,57 +66,93 @@
                                     <?php endif; ?>
                                 </div>
                                 <?php if (can_edit_step($currentUser, $step['step_name'])): ?>
-                                    <form method="post" action="index.php?page=step_update" class="row g-2 align-items-start step-form">
-                                        <input type="hidden" name="contract_id" value="<?= h((string) $contract['id']) ?>">
-                                        <input type="hidden" name="step_id" value="<?= h((string) $step['id']) ?>">
-                                        <?php if ($currentUser['role'] === 'etudiant'): ?>
-                                            <input type="hidden" name="state" value="done">
-                                            <div class="col-auto">
-                                                <button type="submit" class="btn btn-outline-primary btn-sm" <?= $step['state'] === 'done' ? 'disabled' : '' ?>>Signaler</button>
-                                            </div>
-                                        <?php else: ?>
-                                            <?php $customChoices = get_step_custom_choices($step['step_name']); ?>
-                                            <?php if ($customChoices !== null): ?>
-                                                <?php
-                                                    $currentChoice = $step['note'] ?? '';
-                                                    $currentDocuments = '';
-                                                    if (strpos($currentChoice, ':') !== false) {
-                                                        [$currentChoice, $currentDocuments] = explode(':', $currentChoice, 2);
-                                                        $currentDocuments = trim($currentDocuments);
+                                    <?php $canComplete = can_complete_step($contract['steps'], (int) $step['step_order']); ?>
+                                    <?php $isExclusiveDone = is_step_mutually_exclusive_with_done($contract['steps'], $step['step_name']); ?>
+                                    <?php if (!$canComplete && (int) $step['step_order'] > 1): ?>
+                                        <div class="alert alert-warning mb-0 py-2 w-100">
+                                            <small class="d-flex align-items-center gap-2">
+                                                <i class="fas fa-lock"></i>
+                                                <?php 
+                                                    $prevOrder = (int) $step['step_order'] - 1;
+                                                    $prevStep = null;
+                                                    foreach ($contract['steps'] as $s) {
+                                                        if ((int) $s['step_order'] === $prevOrder) {
+                                                            $prevStep = $s;
+                                                            break;
+                                                        }
                                                     }
                                                 ?>
-                                                <div class="col-md-auto">
-                                                    <select class="form-select form-select-sm decision-choice-select" data-step-id="<?= h((string) $step['id']) ?>" name="note">
-                                                        <option value="">Choisir une décision</option>
-                                                        <option value="valide" <?= $currentChoice === 'valide' ? 'selected' : '' ?>>Valide</option>
-                                                        <option value="refuse" <?= $currentChoice === 'refuse' ? 'selected' : '' ?>>Refuse</option>
-                                                        <option value="demande-documents" <?= $currentChoice === 'demande-documents' ? 'selected' : '' ?>>Demande de documents supplémentaires ou de modifications</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md doc-note-container" <?= $currentChoice !== 'demande-documents' ? 'style="display:none;"' : '' ?>>
-                                                    <input type="text" class="form-control form-control-sm doc-note-field" name="doc-note" placeholder="Préciser les documents supplémentaires ou modifications demandés" value="<?= h($currentDocuments) ?>">
-                                                </div>
+                                                Cette étape ne peut être complétée que si <strong><?= h(step_label($prevStep['step_name'] ?? 'l\'étape précédente')) ?></strong> est complétée.
+                                            </small>
+                                        </div>
+                                    <?php elseif ($isExclusiveDone): ?>
+                                        <div class="alert alert-info mb-0 py-2 w-100">
+                                            <small class="d-flex align-items-center gap-2">
+                                                <i class="fas fa-info-circle"></i>
+                                                <?php
+                                                    $exclusiveSteps = [
+                                                        'APT obtenue' => 'APT refusee',
+                                                        'APT refusee' => 'APT obtenue',
+                                                    ];
+                                                    $exclusiveName = $exclusiveSteps[$step['step_name']] ?? '';
+                                                ?>
+                                                L'étape <strong><?= h(step_label($exclusiveName)) ?></strong> est déjà complétée, cette étape n'est donc pas applicable.
+                                            </small>
+                                        </div>
+                                    <?php else: ?>
+                                        <form method="post" action="index.php?page=step_update" class="row g-2 align-items-start step-form">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="contract_id" value="<?= h((string) $contract['id']) ?>">
+                                            <input type="hidden" name="step_id" value="<?= h((string) $step['id']) ?>">
+                                            <?php if ($currentUser['role'] === 'etudiant'): ?>
                                                 <input type="hidden" name="state" value="done">
-                                                <div class="col-md-auto">
-                                                    <button type="submit" class="btn btn-primary btn-sm">Mettre a jour</button>
+                                                <div class="col-auto">
+                                                    <button type="submit" class="btn btn-outline-primary btn-sm" <?= $step['state'] === 'done' ? 'disabled' : '' ?>>Signaler</button>
                                                 </div>
                                             <?php else: ?>
-                                                <div class="col-md-auto">
-                                                    <select class="form-select form-select-sm" name="state">
-                                                        <option value="pending" <?= $step['state'] === 'pending' ? 'selected' : '' ?>>En attente</option>
-                                                        <option value="done" <?= $step['state'] === 'done' ? 'selected' : '' ?>>Complétée</option>
-                                                        <option value="rejected" <?= $step['state'] === 'rejected' ? 'selected' : '' ?>>Refusée</option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md">
-                                                    <input type="text" class="form-control form-control-sm" name="note" placeholder="Note optionnelle">
-                                                </div>
-                                                <div class="col-md-auto">
-                                                    <button type="submit" class="btn btn-primary btn-sm">Mettre a jour</button>
-                                                </div>
+                                                <?php $customChoices = get_step_custom_choices($step['step_name']); ?>
+                                                <?php if ($customChoices !== null): ?>
+                                                    <?php
+                                                        $currentChoice = $step['note'] ?? '';
+                                                        $currentDocuments = '';
+                                                        if (strpos($currentChoice, ':') !== false) {
+                                                            [$currentChoice, $currentDocuments] = explode(':', $currentChoice, 2);
+                                                            $currentDocuments = trim($currentDocuments);
+                                                        }
+                                                    ?>
+                                                    <div class="col-md-auto">
+                                                        <select class="form-select form-select-sm decision-choice-select" data-step-id="<?= h((string) $step['id']) ?>" name="note">
+                                                            <option value="">Choisir une décision</option>
+                                                            <option value="valide" <?= $currentChoice === 'valide' ? 'selected' : '' ?>>Valide</option>
+                                                            <option value="refuse" <?= $currentChoice === 'refuse' ? 'selected' : '' ?>>Refuse</option>
+                                                            <option value="demande-documents" <?= $currentChoice === 'demande-documents' ? 'selected' : '' ?>>Demande de documents supplémentaires ou de modifications</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md doc-note-container" <?= $currentChoice !== 'demande-documents' ? 'style="display:none;"' : '' ?>>
+                                                        <input type="text" class="form-control form-control-sm doc-note-field" name="doc-note" placeholder="Préciser les documents supplémentaires ou modifications demandés" value="<?= h($currentDocuments) ?>">
+                                                    </div>
+                                                    <input type="hidden" name="state" value="done">
+                                                    <div class="col-md-auto">
+                                                        <button type="submit" class="btn btn-primary btn-sm">Mettre a jour</button>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div class="col-md-auto">
+                                                        <select class="form-select form-select-sm" name="state">
+                                                            <option value="pending" <?= $step['state'] === 'pending' ? 'selected' : '' ?>>En attente</option>
+                                                            <option value="done" <?= $step['state'] === 'done' ? 'selected' : '' ?>>Complétée</option>
+                                                            <option value="rejected" <?= $step['state'] === 'rejected' ? 'selected' : '' ?>>Refusée</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md">
+                                                        <input type="text" class="form-control form-control-sm" name="note" placeholder="Note optionnelle">
+                                                    </div>
+                                                    <div class="col-md-auto">
+                                                        <button type="submit" class="btn btn-primary btn-sm">Mettre a jour</button>
+                                                    </div>
+                                                <?php endif; ?>
                                             <?php endif; ?>
-                                        <?php endif; ?>
-                                    </form>
+                                        </form>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                         </div>

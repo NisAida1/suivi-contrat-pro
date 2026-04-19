@@ -16,6 +16,7 @@ $formations = [
         <div class="card shadow-sm border-0">
             <div class="card-body p-4">
                 <form method="post" action="index.php?page=contract_create" class="row g-3">
+                    <?= csrf_field() ?>
                     <div class="col-md-6">
                         <label class="form-label">Prénom <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="first_name" id="first_name" required>

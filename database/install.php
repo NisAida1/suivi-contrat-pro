@@ -2,6 +2,35 @@
 
 declare(strict_types=1);
 
+function starts_with_install(string $value, string $prefix): bool
+{
+    return substr($value, 0, strlen($prefix)) === $prefix;
+}
+
+function ends_with_install(string $value, string $suffix): bool
+{
+    if ($suffix === '') {
+        return true;
+    }
+
+    return substr($value, -strlen($suffix)) === $suffix;
+}
+
+function can_use_putenv_install(): bool
+{
+    if (!function_exists('putenv')) {
+        return false;
+    }
+
+    $disabled = (string) ini_get('disable_functions');
+    if ($disabled === '') {
+        return true;
+    }
+
+    $parts = array_map('trim', explode(',', $disabled));
+    return !in_array('putenv', $parts, true);
+}
+
 function load_dotenv_for_install(string $path): void
 {
     if (!is_file($path) || !is_readable($path)) {
@@ -15,7 +44,7 @@ function load_dotenv_for_install(string $path): void
 
     foreach ($lines as $line) {
         $line = trim($line);
-        if ($line === '' || str_starts_with($line, '#')) {
+        if ($line === '' || starts_with_install($line, '#')) {
             continue;
         }
 
@@ -30,7 +59,7 @@ function load_dotenv_for_install(string $path): void
             continue;
         }
 
-        if ((str_starts_with($value, '"') && str_ends_with($value, '"')) || (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
+        if ((starts_with_install($value, '"') && ends_with_install($value, '"')) || (starts_with_install($value, "'") && ends_with_install($value, "'"))) {
             $value = substr($value, 1, -1);
         }
 
@@ -38,7 +67,9 @@ function load_dotenv_for_install(string $path): void
             continue;
         }
 
-        putenv($key . '=' . $value);
+        if (can_use_putenv_install()) {
+            putenv($key . '=' . $value);
+        }
         $_ENV[$key] = $value;
         $_SERVER[$key] = $value;
     }

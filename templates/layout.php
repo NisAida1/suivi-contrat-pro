@@ -39,7 +39,23 @@
                     </ul>
                     <div class="d-flex align-items-center gap-3 text-white flex-wrap justify-content-xl-end app-userbar">
                         <span class="badge text-bg-light"><?= h(role_label($currentUser['role'])) ?></span>
-                        <a class="btn btn-outline-light btn-sm" href="index.php?page=logout">Déconnexion</a>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle me-1"></i> Profil
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                                <li><h6 class="dropdown-header"><?= h($currentUser['full_name']) ?></h6></li>
+                                <li><small class="dropdown-item-text text-muted d-block px-3"><?= h($currentUser['email']) ?></small></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="index.php?page=change_password_request">
+                                    <i class="fas fa-key me-2"></i> Changer mon mot de passe
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="index.php?page=logout">
+                                    <i class="fas fa-sign-out-alt me-2"></i> Déconnexion
+                                </a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>

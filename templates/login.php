@@ -11,6 +11,7 @@
                 </div>
 
                 <form method="post" action="index.php?page=login">
+                    <?= csrf_field() ?>
                     <div class="mb-3">
                         <label class="form-label">Email</label>
                         <input type="email" class="form-control" name="email" placeholder="nom@demo.com" required>
@@ -26,16 +27,6 @@
                     </div>
                     <button type="submit" class="btn btn-primary w-100">Se connecter</button>
                 </form>
-
-                <div class="alert alert-info mt-4 mb-0">
-                    <h6 class="fw-bold">Comptes de demo</h6>
-                    <ul class="mb-0 ps-3 small">
-                        <li><code>student@demo.com</code> / <code>student123</code></li>
-                        <li><code>secretary@demo.com</code> / <code>secretary123</code></li>
-                        <li><code>responsable@demo.com</code> / <code>responsable123</code></li>
-                        <li><code>director@demo.com</code> / <code>director123</code></li>
-                    </ul>
-                </div>
             </div>
         </div>
     </div>

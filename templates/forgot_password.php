@@ -9,6 +9,7 @@
                 </div>
 
                 <form method="post" action="index.php?page=forgot_password">
+                    <?= csrf_field() ?>
                     <div class="mb-4">
                         <label class="form-label">Adresse email</label>
                         <input type="email" class="form-control" name="email" placeholder="votre.email@example.com" required autofocus>

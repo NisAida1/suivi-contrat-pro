@@ -4,6 +4,13 @@
     # Block direct web access to internal application folders.
     RewriteRule ^(config|database|src|templates)/ - [F,L,NC]
 
+    # Disable directory listing and index auto-serve
+    RewriteRule ^\.env - [F,L,NC]
+    RewriteRule ^\.git - [F,L,NC]
+    RewriteRule ^\.htaccess - [F,L,NC]
+    RewriteRule ^README\.md$ - [F,L,NC]
+    RewriteRule ^.*\.php$ - [F,L,NC]
+
     # Keep direct access for existing files and directories (assets, index.php, etc.).
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
@@ -18,10 +25,43 @@
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header always set Content-Security-Policy "default-src 'self'; img-src 'self' data: https:; style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; script-src 'self' https://cdn.jsdelivr.net; font-src 'self' data: https://cdnjs.cloudflare.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
 </IfModule>
 
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    Order deny,allow
+    Deny from all
+</IfModule>
+
+# Allow access only to index.php and assets
+<FilesMatch "^index\.php$">
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Allow from all
+    </IfModule>
+</FilesMatch>
+
+<FilesMatch "\.(jpg|jpeg|png|gif|css|js|woff|woff2|ttf|eot|svg)$">
+    <IfModule mod_authz_core.c>
+        Require all granted
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Allow from all
+    </IfModule>
+</FilesMatch>
+
 # Deny direct access to potentially sensitive file types.
-<FilesMatch "\.(sql|md|log|ini|env)$">
+<FilesMatch "\.(sql|md|log|ini|env|git|gitignore|php|phtml|php3|php4|php5|php6|php7|phps|pht|phar)$">
     <IfModule mod_authz_core.c>
         Require all denied
     </IfModule>

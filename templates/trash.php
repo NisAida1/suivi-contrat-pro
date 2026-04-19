@@ -49,6 +49,7 @@
                                 <td class="text-end">
                                     <form method="post" action="index.php?page=trash" class="d-inline" 
                                           onsubmit="return confirm('Voulez-vous restaurer ce dossier ?');">
+                                        <?= csrf_field() ?>
                                         <input type="hidden" name="action" value="restore">
                                         <input type="hidden" name="contract_id" value="<?= (int) $contract['id'] ?>">
                                         <button type="submit" class="btn btn-sm btn-success" title="Restaurer">
@@ -57,6 +58,7 @@
                                     </form>
                                     <form method="post" action="index.php?page=trash" class="d-inline" 
                                           onsubmit="return confirm('⚠️ ATTENTION : Cette action est irréversible !\n\nVoulez-vous supprimer définitivement ce dossier ?\nToutes les données (étapes, activités, historique) seront perdues.');">
+                                        <?= csrf_field() ?>
                                         <input type="hidden" name="action" value="delete_permanent">
                                         <input type="hidden" name="contract_id" value="<?= (int) $contract['id'] ?>">
                                         <button type="submit" class="btn btn-sm btn-danger" title="Supprimer définitivement">
