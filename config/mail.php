@@ -28,16 +28,16 @@ return [
     
     // Configuration SMTP
     'smtp' => [
-        'host' => (string) $env('SMTP_HOST', 'smtp.gmail.com'),
-        'port' => (int) $env('SMTP_PORT', 587),
+        'host' => (string) $env('SMTP_HOST', 'ssl0.ovh.net'),
+        'port' => (int) $env('SMTP_PORT', 465),
         'username' => (string) $env('SMTP_USERNAME', ''),
         'password' => (string) $env('SMTP_PASSWORD', ''),
-        'encryption' => (string) $env('SMTP_ENCRYPTION', 'tls'), // 'tls' ou 'ssl'
+        'encryption' => (string) $env('SMTP_ENCRYPTION', 'ssl'), // 'tls' ou 'ssl'
     ],
     
     // Adresse d'envoi par défaut
     'from' => [
-        'address' => (string) $env('MAIL_FROM_ADDRESS', 'no-reply@example.com'),
+        'address' => (string) $env('MAIL_FROM_ADDRESS', 'projetsuivicp@eilco-ulco.fr'),
         'name' => (string) $env('MAIL_FROM_NAME', 'Suivi Contrat Pro - EILCO'),
     ],
 ];

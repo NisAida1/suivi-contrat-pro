@@ -68,7 +68,7 @@
                                 <?php if (can_edit_step($currentUser, $step['step_name'])): ?>
                                     <?php $canComplete = can_complete_step($contract['steps'], (int) $step['step_order']); ?>
                                     <?php $isExclusiveDone = is_step_mutually_exclusive_with_done($contract['steps'], $step['step_name']); ?>
-                                    <?php if (!$canComplete && (int) $step['step_order'] > 1): ?>
+                                    <?php if (!$canComplete && (int) $step['step_order'] >= 1): ?>
                                         <div class="alert alert-warning mb-0 py-2 w-100">
                                             <small class="d-flex align-items-center gap-2">
                                                 <i class="fas fa-lock"></i>

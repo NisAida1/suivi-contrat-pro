@@ -63,7 +63,14 @@ function student_dashboard_metrics(PDO $pdo, int $studentUserId): array
     ];
 }
 
-function fetch_contracts(PDO $pdo, string $query = '', string $status = ''): array
+function fetch_available_academic_years(PDO $pdo): array
+{
+    $stmt = $pdo->query('SELECT DISTINCT academic_year FROM contracts WHERE deleted_at IS NULL AND academic_year IS NOT NULL ORDER BY academic_year DESC');
+    $years = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    return array_filter($years, fn($year) => $year !== null && $year !== '');
+}
+
+function fetch_contracts(PDO $pdo, string $query = '', string $status = '', string $academicYear = ''): array
 {
     $sql = 'SELECT c.*, u.full_name AS student_name, u.email AS student_email,
                    SUM(CASE WHEN cs.state = "done" THEN 1 ELSE 0 END) AS done_steps,
@@ -82,6 +89,11 @@ function fetch_contracts(PDO $pdo, string $query = '', string $status = ''): arr
     if ($status !== '' && in_array($status, contract_statuses(), true)) {
         $sql .= ' AND c.status = :status';
         $params['status'] = $status;
+    }
+
+    if ($academicYear !== '') {
+        $sql .= ' AND c.academic_year = :academic_year';
+        $params['academic_year'] = $academicYear;
     }
 
     $sql .= ' GROUP BY c.id ORDER BY c.created_at DESC';

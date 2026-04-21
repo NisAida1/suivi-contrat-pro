@@ -595,8 +595,10 @@ switch ($page) {
         $currentUser = require_roles($pdo, ['secretaire', 'responsable', 'directeur']);
         $search = trim((string) ($_GET['q'] ?? ''));
         $statusFilter = trim((string) ($_GET['status'] ?? ''));
-        $contracts = fetch_contracts($pdo, $search, $statusFilter);
+        $academicYearFilter = trim((string) ($_GET['academic_year'] ?? ''));
+        $contracts = fetch_contracts($pdo, $search, $statusFilter, $academicYearFilter);
         $statuses = contract_statuses();
+        $academicYears = fetch_available_academic_years($pdo);
         $title = 'Contrats';
         $view = __DIR__ . '/templates/contracts.php';
         break;

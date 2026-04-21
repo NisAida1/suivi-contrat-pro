@@ -101,13 +101,14 @@ CREATE TABLE password_reset_tokens (
 
 ## Configuration email
 
-Les emails sont envoyés via **Gmail SMTP** :
-- Serveur : smtp.gmail.com:587
-- Sécurité : TLS
-- Email : nisrineaida2@gmail.com
-- Mot de passe d'application : htlw uzvj rjcr hzpo
+Les emails sont envoyés via **OVH SMTP** :
+- Serveur : ssl0.ovh.net
+- Port : 465
+- Sécurité : SSL
+- Email : projetsuivicp@eilco-ulco.fr
+- Mot de passe : sVc2RgZzL
 
-Configuration dans : `config/mail.php`
+Configuration dans : `config/mail.php` et `.env.example`
 
 ## Sécurité
 

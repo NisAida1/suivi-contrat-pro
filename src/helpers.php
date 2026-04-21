@@ -369,8 +369,8 @@ function is_mandatory_step(string $stepName): bool
 
 function can_complete_step(array $allSteps, int $currentStepOrder): bool
 {
-    // La première étape peut toujours être complétée
-    if ($currentStepOrder === 1) {
+    // La première étape (step_order = 0) peut toujours être complétée
+    if ($currentStepOrder === 0) {
         return true;
     }
     

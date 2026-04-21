@@ -5,11 +5,12 @@
                 <h2 class="mb-1">Gestion des contrats</h2>
                 <p class="text-muted mb-0">
                     Consultez et gérez les dossiers.
-                    <?php if ($search !== '' || $statusFilter !== ''): ?>
+                    <?php if ($search !== '' || $statusFilter !== '' || ($academicYearFilter ?? '') !== ''): ?>
                         <span class="badge bg-info ms-2">
                             Filtres actifs : 
                             <?php if ($search !== ''): ?>Recherche : "<?= h($search) ?>"<?php endif; ?>
-                            <?php if ($statusFilter !== ''): ?>Statut : <?= h(status_label($statusFilter)) ?><?php endif; ?>
+                            <?php if ($statusFilter !== ''): ?><?php if ($search !== ''): ?> • <?php endif; ?>Statut : <?= h(status_label($statusFilter)) ?><?php endif; ?>
+                            <?php if (($academicYearFilter ?? '') !== ''): ?><?php if ($search !== '' || $statusFilter !== ''): ?> • <?php endif; ?>Année : <?= h($academicYearFilter) ?><?php endif; ?>
                         </span>
                     <?php endif; ?>
                 </p>
@@ -22,7 +23,7 @@
             <div class="card-body">
                 <form method="get" action="index.php" class="row g-3 align-items-end">
                     <input type="hidden" name="page" value="contracts">
-                    <div class="col-md-5">
+                    <div class="col-md-3">
                         <label class="form-label">Recherche</label>
                         <input type="text" class="form-control" name="q" value="<?= h($search ?? '') ?>" placeholder="Nom, entreprise, numéro de dossier, année universitaire">
                     </div>
@@ -35,7 +36,16 @@
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="col-md-3 d-flex gap-2">
+                    <div class="col-md-3">
+                        <label class="form-label">Année académique</label>
+                        <select class="form-select" name="academic_year">
+                            <option value="">Toutes</option>
+                            <?php foreach ($academicYears as $year): ?>
+                                <option value="<?= h($year) ?>" <?= ($academicYearFilter ?? '') === $year ? 'selected' : '' ?>><?= h($year) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
                         <button type="submit" class="btn btn-primary w-100">Filtrer</button>
                         <a href="index.php?page=contracts" class="btn btn-secondary w-100">Réinitialiser</a>
                     </div>
