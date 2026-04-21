@@ -37,51 +37,70 @@ Le projet est basé sur PHP natif, MySQL, des templates PHP et du CSS.
    - Soit exécuter `database/schema.sql` dans MySQL
    - Soit lancer `php database/install.php`
 2. Configurer la connexion DB dans `config/app.php`
-   - ou via les variables: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`
-   - note: `DB_PASSWORD` est aussi supporté
-3. Lancer l'application:
+   - ou via les variables: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`
+3. Configurer les emails (SMTP OVH):
+   - `SMTP_HOST=ssl0.ovh.net`
+   - `SMTP_PORT=465`
+   - `SMTP_USERNAME=projetsuivicp@eilco-ulco.fr`
+   - `SMTP_PASSWORD=[votre mot de passe OVH]`
+   - `SMTP_ENCRYPTION=ssl`
+   - `MAIL_FROM_ADDRESS=projetsuivicp@eilco-ulco.fr`
+4. Lancer l'application:
    - `php -S localhost:8000`
-4. Ouvrir:
+5. Ouvrir:
    - `http://localhost:8000/index.php?page=login`
 
-## Hebergement Apache (OVH)
+## Hebergement OVH (Apache)
 
-Le projet est maintenant pret pour Apache avec le fichier `.htaccess` fourni:
+Le projet est pret pour Apache avec le fichier `.htaccess` fourni:
 - routage des URLs vers `index.php`
 - blocage de l acces web direct a `config/`, `src/`, `database/`, `templates/`
 - headers de securite de base
 
 ### 1. Deployer les fichiers
-- Uploader tout le contenu du projet sur votre hebergement Apache
+- Uploader tout le contenu du projet sur votre hebergement Apache OVH
 - Verifier que `.htaccess` est bien present a la racine du projet deploye
 
 ### 2. Configurer la base de donnees
 
 Option A (recommandee): variables d environnement Apache
-- `DB_HOST`
-- `DB_PORT`
-- `DB_NAME`
-- `DB_USER`
-- `DB_PASS`
+- `DB_HOST` (serveur MySQL OVH)
+- `DB_PORT` (3306 par defaut)
+- `DB_NAME` (base de donnees)
+- `DB_USER` (utilisateur MySQL)
+- `DB_PASSWORD` (mot de passe MySQL)
 - `DB_CHARSET` (optionnel, `utf8mb4` par defaut)
 
 Option B: modifier `config/app.php` directement si les variables d environnement ne sont pas disponibles.
 
-### 3. Configurer l URL applicative
+### 3. Configurer l'email (SMTP OVH)
+
+Créer ou mettre à jour un fichier `.env` a la racine du projet:
+```
+MAIL_DRIVER=smtp
+SMTP_HOST=ssl0.ovh.net
+SMTP_PORT=465
+SMTP_USERNAME=projetsuivicp@eilco-ulco.fr
+SMTP_PASSWORD=votre_mot_de_passe_ovh
+SMTP_ENCRYPTION=ssl
+MAIL_FROM_ADDRESS=projetsuivicp@eilco-ulco.fr
+MAIL_FROM_NAME="Suivi Contrat Pro - EILCO"
+```
+
+### 4. Configurer l URL applicative
 
 Definir `APP_URL` pour les liens d emails et les redirections absolues, par exemple:
 - `https://projetsuivicp.eilco-ulco.fr`
 
 Si `APP_URL` n est pas defini, l application essaie de detecter automatiquement l URL depuis la requete Apache.
 
-Le fichier `.env` (a la racine du projet) est charge automatiquement au demarrage.
-
-### 4. Initialiser la base
+### 5. Initialiser la base
 - Importer `database/schema.sql` via phpMyAdmin OVH
 
-### 5. Tester
+### 6. Tester
 - Ouvrir: `https://votre-domaine/index.php?page=login`
 - Verifier ensuite qu une URL propre comme `https://votre-domaine/login` fonctionne aussi
+- Tester la fonctionnalité "Mot de passe oublié" pour verifier que les emails OVH fonctionnent
 
 ## Comptes demo (4 comptes)
 - Étudiant: `student@demo.com` / `student123`
@@ -136,9 +155,31 @@ Règles principales:
 - Affichage du modificateur + date/heure sur les étapes complétées
 
 ## Configuration email
-- Voir `EMAIL_CONFIG.md`
-- Le service supporte SMTP ou `mail()` PHP
-- Les envois automatiques dépendent de la logique métier active dans l'application
+
+L'application utilise SMTP OVH pour l'envoi des emails.
+
+### Serveur SMTP OVH
+- **Host**: `ssl0.ovh.net`
+- **Port**: `465`
+- **Sécurité**: `SSL`
+- **Email**: `projetsuivicp@eilco-ulco.fr`
+
+### Variables d'environnement
+```
+MAIL_DRIVER=smtp
+SMTP_HOST=ssl0.ovh.net
+SMTP_PORT=465
+SMTP_USERNAME=projetsuivicp@eilco-ulco.fr
+SMTP_PASSWORD=votre_mot_de_passe
+SMTP_ENCRYPTION=ssl
+MAIL_FROM_ADDRESS=projetsuivicp@eilco-ulco.fr
+MAIL_FROM_NAME="Suivi Contrat Pro - EILCO"
+```
+
+### Configuration détaillée
+- Voir `PASSWORD_SECURITY_GUIDE.md` pour les fonctionnalités de sécurité (changement forcé de mot de passe, réinitialisation)
+- Voir `EMAIL_CONFIG.md` pour plus de détails sur la configuration email
+- La configuration est gérée dans `config/mail.php`
 
 ## Notes
 - L'application privilégie une logique serveur simple et robuste
